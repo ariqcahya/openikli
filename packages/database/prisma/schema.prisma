@@ -1,0 +1,326 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_DAERAH
+  ANALIS
+  ENUMERATOR
+  VIEWER
+}
+
+enum OrganizationType {
+  PROVINSI
+  KABUPATEN
+  KOTA
+  INSTANSI
+  LAINNYA
+}
+
+enum RegionLevel {
+  PROVINCE
+  CITY
+  DISTRICT
+  VILLAGE
+  CUSTOM
+}
+
+enum SurveyStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  ANALYZED
+  ARCHIVED
+}
+
+enum QuestionType {
+  RATING
+  TEXT
+  TEXTAREA
+  SELECT
+  MULTI_SELECT
+  LOCATION
+  FILE
+}
+
+enum ReviewStatus {
+  NOT_ANALYZED
+  PROCESSING
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  FAILED
+}
+
+model User {
+  id           String               @id @default(uuid())
+  phone        String               @unique
+  password     String
+  name         String
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+  memberships  OrganizationMember[]
+  auditLogs    AuditLog[]
+  responses    SurveyResponse[]     @relation("EnumeratorResponses")
+
+  @@map("users")
+}
+
+model Organization {
+  id                  String                     @id @default(uuid())
+  name                String
+  type                OrganizationType           @default(LAINNYA)
+  logoUrl             String?                    @map("logo_url")
+  address             String?
+  contactEmail        String?                    @map("contact_email")
+  settings            Json?
+  createdAt           DateTime                   @default(now()) @map("created_at")
+  updatedAt           DateTime                   @updatedAt @map("updated_at")
+  members             OrganizationMember[]
+  regions             Region[]
+  infrastructureTypes InfrastructureType[]
+  surveys             Survey[]
+  llmSettings         OrganizationLlmSetting?
+  auditLogs           AuditLog[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  userId         String       @map("user_id")
+  role           Role         @default(VIEWER)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+model Region {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  parentId       String?          @map("parent_id")
+  level          RegionLevel      @default(CUSTOM)
+  name           String
+  bpsCode        String?          @map("bps_code")
+  kemendagriCode String?          @map("kemendagri_code")
+  geometry       Unsupported("geometry(Geometry,4326)")?
+  centerLat      Float?           @map("center_lat")
+  centerLng      Float?           @map("center_lng")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent         Region?          @relation("RegionHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Region[]         @relation("RegionHierarchy")
+  responses      SurveyResponse[]
+  ikliScores     IkliScore[]
+
+  @@map("regions")
+}
+
+model InfrastructureType {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  code           String
+  name           String
+  description    String?
+  isActive       Boolean          @default(true) @map("is_active")
+  sortOrder      Int              @default(0) @map("sort_order")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  responses      SurveyResponse[]
+  ikliScores     IkliScore[]
+
+  @@unique([organizationId, code])
+  @@map("infrastructure_types")
+}
+
+model Survey {
+  id             String                 @id @default(uuid())
+  organizationId String                 @map("organization_id")
+  title          String
+  description    String?
+  year           Int
+  periodLabel    String                 @map("period_label")
+  status         SurveyStatus           @default(DRAFT)
+  scoringScale   Int                    @default(5) @map("scoring_scale")
+  startDate      DateTime?              @map("start_date")
+  endDate        DateTime?              @map("end_date")
+  settings       Json?
+  createdBy      String?                @map("created_by")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  questions      SurveyQuestion[]
+  responses      SurveyResponse[]
+  ikliScores     IkliScore[]
+  analyses       AiCommentAnalysis[]
+  recommendations AiRecommendation[]
+
+  @@map("surveys")
+}
+
+model SurveyQuestion {
+  id            String         @id @default(uuid())
+  surveyId      String         @map("survey_id")
+  indicatorCode String         @map("indicator_code")
+  indicatorName String         @map("indicator_name")
+  questionText  String         @map("question_text")
+  questionType  QuestionType   @map("question_type")
+  helpText      String?        @map("help_text")
+  weight        Float          @default(1.0)
+  isRequired    Boolean        @default(true) @map("is_required")
+  options       Json?          // for SELECT or MULTI_SELECT options
+  sortOrder     Int            @default(0) @map("sort_order")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  survey        Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  answers       SurveyAnswer[]
+
+  @@map("survey_questions")
+}
+
+model SurveyResponse {
+  id                   String             @id @default(uuid())
+  surveyId             String             @map("survey_id")
+  regionId             String?            @map("region_id")
+  infrastructureTypeId String?            @map("infrastructure_type_id")
+  respondentAge        Int?               @map("respondent_age")
+  respondentGender     String?            @map("respondent_gender")
+  respondentJob        String?            @map("respondent_job")
+  gpsLat               Float?             @map("gps_lat")
+  gpsLng               Float?             @map("gps_lng")
+  notes                String?
+  isEnumeratorInput    Boolean            @default(false) @map("is_enumerator_input")
+  enumeratorId         String?            @map("enumerator_id")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  survey               Survey             @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  region               Region?            @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  infrastructureType   InfrastructureType? @relation(fields: [infrastructureTypeId], references: [id], onDelete: SetNull)
+  enumerator           User?              @relation("EnumeratorResponses", fields: [enumeratorId], references: [id], onDelete: SetNull)
+  answers              SurveyAnswer[]
+
+  @@map("survey_responses")
+}
+
+model SurveyAnswer {
+  id             String         @id @default(uuid())
+  responseId     String         @map("response_id")
+  questionId     String         @map("question_id")
+  ratingValue    Int?           @map("rating_value")
+  textValue      String?        @map("text_value")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  response       SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question       SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([responseId, questionId])
+  @@map("survey_answers")
+}
+
+model IkliScore {
+  id                   String              @id @default(uuid())
+  surveyId             String              @map("survey_id")
+  regionId             String?             @map("region_id")
+  infrastructureTypeId String?             @map("infrastructure_type_id")
+  indicatorCode        String              @map("indicator_code")
+  scoreRaw             Float               @map("score_raw")
+  score100             Float               @map("score_100")
+  category             String
+  responseCount        Int                 @map("response_count")
+  calculatedAt         DateTime            @default(now()) @map("calculated_at")
+  survey               Survey              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  region               Region?             @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  infrastructureType   InfrastructureType? @relation(fields: [infrastructureTypeId], references: [id], onDelete: SetNull)
+
+  @@map("ikli_scores")
+}
+
+model OrganizationLlmSetting {
+  id             String       @id @default(uuid())
+  organizationId String       @unique @map("organization_id")
+  provider       String       // e.g. "openai", "gemini", "anthropic", "ollama", "custom"
+  modelName      String       @map("model_name")
+  baseUrl        String?      @map("base_url")
+  encryptedApiKey String      @map("encrypted_api_key")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_llm_settings")
+}
+
+model LlmUsageLog {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  provider       String
+  modelName      String    @map("model_name")
+  promptTokens   Int       @map("prompt_tokens")
+  completionTokens Int     @map("completion_tokens")
+  totalTokens    Int       @map("total_tokens")
+  action         String    // e.g. "COMMENT_ANALYSIS", "RECOMMENDATION"
+  costEstimate   Float     @default(0.0) @map("cost_estimate")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("llm_usage_logs")
+}
+
+model AiCommentAnalysis {
+  id             String       @id @default(uuid())
+  surveyId       String       @map("survey_id")
+  topics         Json         // Array of topics: [{ name, count, sentiment, severity }]
+  sentiment      String       // Overall sentiment: "POSITIF", "NETRAL", "NEGATIF"
+  severity       String       // Severity level: "RENDAH", "SEDANG", "TINGGI"
+  summary        String
+  recommendation String
+  confidence     Float
+  reviewStatus   ReviewStatus @default(NEEDS_REVIEW) @map("review_status")
+  modelName      String       @map("model_name")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  survey         Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@map("ai_comment_analyses")
+}
+
+model AiRecommendation {
+  id             String       @id @default(uuid())
+  surveyId       String       @map("survey_id")
+  title          String
+  description    String
+  priorityScore  Float        @map("priority_score")
+  evidence       Json         // Data metrics backing this recommendation
+  reviewStatus   ReviewStatus @default(NEEDS_REVIEW) @map("review_status")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  survey         Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@map("ai_recommendations")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  organizationId String?       @map("organization_id")
+  userId         String?       @map("user_id")
+  action         String
+  details        String?
+  ipAddress      String?       @map("ip_address")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
