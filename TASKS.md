@@ -15,17 +15,13 @@ Status:
 
 ### Repository
 
-- [ ] Buat repository `opensource-ikli`.
+- [ ] Inisialisasi Git repository.
 - [ ] Tambahkan `README.md`.
-- [ ] Tambahkan `PRD.md`.
-- [ ] Tambahkan `PLAN.md`.
-- [ ] Tambahkan `TASKS.md`.
-- [ ] Tambahkan `DESIGN_GUIDELINES.md`.
-- [ ] Tambahkan `CODING_AGENT_PROMPT.md`.
 - [ ] Tambahkan `CONTRIBUTING.md`.
 - [ ] Tambahkan `LICENSE`.
 - [ ] Tambahkan `.gitignore`.
 - [ ] Tambahkan `.env.example`.
+
 
 ### Monorepo
 
@@ -53,7 +49,7 @@ Status:
 - [ ] Setup base layout.
 - [ ] Setup dashboard shell.
 - [ ] Setup public survey layout.
-- [ ] Setup theme tokens sesuai `DESIGN_GUIDELINES.md`.
+- [ ] Setup theme tokens sesuai spesifikasi desain UI/UX.
 
 ### Database
 
@@ -792,7 +788,7 @@ Status:
 
 ### Documentation
 
-- [ ] Update README setiap phase.
-- [ ] Update TASKS.md setiap selesai fitur.
+- [ ] Update README.md setiap penyelesaian fase.
+- [ ] Update berkas checklist tugas setiap rilis fitur.
 - [ ] Tambahkan screenshot demo jika sudah ada UI.
 - [ ] Tambahkan troubleshooting Coolify.

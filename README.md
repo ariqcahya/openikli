@@ -67,11 +67,6 @@ opensource-ikli/
 │   └── ui/
 ├── docker-compose.yml
 ├── .env.example
-├── PRD.md
-├── PLAN.md
-├── TASKS.md
-├── DESIGN_GUIDELINES.md
-├── CODING_AGENT_PROMPT.md
 └── README.md
 ```
 
@@ -80,8 +75,8 @@ opensource-ikli/
 ## Quick Start Local
 
 ```bash
-git clone https://github.com/your-org/opensource-ikli.git
-cd opensource-ikli
+git clone https://github.com/ariqcahya/openikli.git
+cd openikli
 cp .env.example .env
 pnpm install
 pnpm db:migrate
@@ -100,8 +95,8 @@ http://localhost:3000
 ## Quick Start Docker Compose
 
 ```bash
-git clone https://github.com/your-org/opensource-ikli.git
-cd opensource-ikli
+git clone https://github.com/ariqcahya/openikli.git
+cd openikli
 cp .env.example .env
 docker compose up -d
 ```
@@ -156,7 +151,7 @@ GEMINI_API_KEY=
 ANTHROPIC_API_KEY=
 ```
 
-API key LLM dimasukkan dari dashboard admin.
+API key LLM dimasukkan dari dashboard admin secara terenkripsi.
 
 ---
 
@@ -192,22 +187,11 @@ API key LLM dimasukkan dari dashboard admin.
 
 ---
 
-## Dokumen Penting
-
-- `PRD.md` — Product Requirement Document
-- `PLAN.md` — Rencana implementasi
-- `TASKS.md` — Checklist implementasi
-- `DESIGN_GUIDELINES.md` — Pedoman desain
-- `CODING_AGENT_PROMPT.md` — Prompt untuk coding agent
-
----
-
 ## License
 
-Rekomendasi lisensi:
+Proyek ini dirilis di bawah lisensi:
 
 ```text
-AGPL-3.0
+MIT License
 ```
 
-Atau MIT jika ingin adopsi lebih bebas.
