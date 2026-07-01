@@ -4,13 +4,12 @@ Terima kasih ingin berkontribusi ke OpenSource-IKLI.
 
 ## Prinsip Kontribusi
 
-- Ikuti `PRD.md`.
-- Ikuti `DESIGN_GUIDELINES.md`.
-- Jangan membuat fitur di luar scope tanpa issue/discussion.
-- Jangan menambahkan API key atau secret ke repo.
-- Jangan membuat scoring IKLI menggunakan LLM.
-- Jangan membuat wilayah hardcode.
-- Jangan membuat UI terlalu “AI-ish”.
+- Ikuti spesifikasi fitur dan roadmap yang tertera di GitHub Issues.
+- Jangan membuat fitur di luar scope tanpa mendiskusikannya terlebih dahulu melalui issue/discussion.
+- Jangan menambahkan API key atau secret ke repositori.
+- Jangan menggunakan LLM/AI untuk perhitungan skor IKLI (perhitungan harus deterministik).
+- Jangan menulis kode wilayah secara hardcode (gunakan relasi database wilayah).
+- Gunakan desain UI/UX yang bersih, modern, dan profesional sesuai dengan standar usability.
 
 ## Setup Lokal
 
@@ -24,7 +23,7 @@ pnpm dev
 
 ## Sebelum Pull Request
 
-Jalankan:
+Jalankan pengujian lokal berikut untuk memastikan tidak ada eror:
 
 ```bash
 pnpm lint
@@ -35,10 +34,11 @@ pnpm test
 
 ## Pull Request Checklist
 
-- [ ] Fitur sesuai PRD/PLAN/TASKS.
-- [ ] UI sesuai design guidelines.
-- [ ] Tidak ada secret.
-- [ ] Role permission dicek.
-- [ ] Organization scoping aman.
-- [ ] Empty/loading/error state tersedia.
-- [ ] Dokumentasi diperbarui jika perlu.
+- [ ] Fitur berjalan sesuai spesifikasi di issue/roadmap.
+- [ ] Tampilan UI konsisten dengan tema aplikasi dan responsif.
+- [ ] Tidak ada secret/API key yang tidak sengaja ter-commit.
+- [ ] Pemeriksaan hak akses (role permission) sudah diterapkan.
+- [ ] Keamanan pembatasan data organisasi (organization scoping) aman.
+- [ ] Status kosong (empty state), loading, dan error tersedia pada UI.
+- [ ] Dokumentasi atau README diperbarui jika ada perubahan skema/setup.
+
