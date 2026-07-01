@@ -87,8 +87,17 @@ pnpm dev
 Buka:
 
 ```text
-http://localhost:3000
+http://localhost:3001
 ```
+
+### Akun Login Bawaan (Seed Data)
+
+Setelah melakukan `pnpm db:seed`, Anda dapat masuk ke dashboard menggunakan kredensial bawaan berikut:
+
+*   **Super Admin**:
+    *   **Nomor HP**: `081234567890`
+    *   **Password**: `adminpassword123`
+    *   **Role**: `SUPER_ADMIN`
 
 ---
 
