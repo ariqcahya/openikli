@@ -1,9 +1,11 @@
 {
-  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
   "/login/page": "app/login/page.js",
-  "/api/surveys/[id]/route": "app/api/surveys/[id]/route.js",
-  "/api/surveys/[id]/questions/route": "app/api/surveys/[id]/questions/route.js",
-  "/dashboard/surveys/page": "app/dashboard/surveys/page.js",
+  "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/api/surveys/route": "app/api/surveys/route.js",
+  "/dashboard/users/page": "app/dashboard/users/page.js",
+  "/dashboard/organizations/page": "app/dashboard/organizations/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/surveys/[id]/page": "app/dashboard/surveys/[id]/page.js"
+  "/dashboard/surveys/page": "app/dashboard/surveys/page.js"
 }
