@@ -122,8 +122,8 @@ Status:
 - [x] Halaman daftar organisasi.
 - [x] Form tambah organisasi.
 - [x] Form edit organisasi.
-- [ ] Upload logo organisasi.
-- [ ] Organization switcher.
+- [x] Upload logo organisasi.
+- [x] Organization switcher.
 - [x] Empty state organisasi.
 
 ### User Management UI
@@ -133,14 +133,14 @@ Status:
 - [x] Form edit user.
 - [x] Assign role.
 - [x] Nonaktifkan user.
-- [ ] Audit log perubahan user.
+- [x] Audit log perubahan user.
 
 ### Acceptance
 
 - [x] Super Admin dapat login.
 - [x] Super Admin dapat membuat organisasi.
 - [x] Admin Daerah dapat mengelola user organisasinya.
-- [ ] Viewer tidak dapat mengubah data.
+- [x] Viewer tidak dapat mengubah data.
 - [x] Enumerator tidak dapat mengakses dashboard penuh.
 - [x] Audit log tercatat.
 

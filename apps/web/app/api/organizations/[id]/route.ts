@@ -15,7 +15,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { name, type, address, contactEmail } = body;
+    const { name, type, address, contactEmail, logoUrl } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -28,6 +28,7 @@ export async function PUT(
         type: type || 'LAINNYA',
         address: address || null,
         contactEmail: contactEmail || null,
+        logoUrl: logoUrl !== undefined ? logoUrl : undefined,
       },
     });
 

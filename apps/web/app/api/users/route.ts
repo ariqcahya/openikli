@@ -127,6 +127,15 @@ export async function POST(req: Request) {
         },
       });
 
+      await tx.auditLog.create({
+        data: {
+          action: 'CREATE_USER',
+          userId: session.id,
+          organizationId: session.organizationId || null,
+          details: `Membuat pengguna baru: ${name} (${phone}), peran: ${role}, organisasi: ${targetOrgId}`,
+        },
+      });
+
       return u;
     });
 

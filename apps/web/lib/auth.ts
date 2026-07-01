@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import * as jwt from 'jsonwebtoken';
 import { prisma } from 'database';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'ganteme-secret-session-32-chars-key';
+export const SESSION_SECRET = process.env.SESSION_SECRET || 'ganteme-secret-session-32-chars-key';
 
 export interface SessionUser {
   id: string;

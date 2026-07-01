@@ -94,6 +94,16 @@ export async function PUT(
           });
         }
       }
+
+      // Audit Log
+      await tx.auditLog.create({
+        data: {
+          action: 'UPDATE_USER',
+          userId: session.id,
+          organizationId: session.organizationId || null,
+          details: `Mengubah data pengguna ID: ${targetUserId}. Parameter terubah: ${Object.keys(userUpdateData).join(', ')}${role ? `, role: ${role}` : ''}`,
+        },
+      });
     });
 
     return NextResponse.json({ success: true });
@@ -130,8 +140,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete your own user account' }, { status: 400 });
     }
 
-    await prisma.user.delete({
-      where: { id: targetUserId },
+    await prisma.$transaction(async (tx) => {
+      await tx.user.delete({
+        where: { id: targetUserId },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: 'DELETE_USER',
+          userId: session.id,
+          organizationId: session.organizationId || null,
+          details: `Menghapus pengguna ID: ${targetUserId}`,
+        },
+      });
     });
 
     return NextResponse.json({ success: true });

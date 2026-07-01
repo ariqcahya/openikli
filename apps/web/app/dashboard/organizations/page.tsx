@@ -10,6 +10,7 @@ interface Organization {
   type: string;
   address: string | null;
   contactEmail: string | null;
+  logoUrl: string | null;
   _count?: {
     members: number;
   };
@@ -30,13 +31,43 @@ export default function OrganizationsPage() {
     type: 'LAINNYA',
     address: '',
     contactEmail: '',
+    logoUrl: '',
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Delete State
   const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingLogo(true);
+      const data = new FormData();
+      data.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal mengunggah logo');
+      }
+
+      const result = await res.json();
+      setFormData(prev => ({ ...prev, logoUrl: result.url }));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   useEffect(() => {
     checkAccessAndLoad();
@@ -98,6 +129,7 @@ export default function OrganizationsPage() {
       type: 'LAINNYA',
       address: '',
       contactEmail: '',
+      logoUrl: '',
     });
     setFormError(null);
     setIsModalOpen(true);
@@ -110,6 +142,7 @@ export default function OrganizationsPage() {
       type: org.type,
       address: org.address || '',
       contactEmail: org.contactEmail || '',
+      logoUrl: org.logoUrl || '',
     });
     setFormError(null);
     setIsModalOpen(true);
@@ -257,8 +290,12 @@ export default function OrganizationsPage() {
                   <tr key={org.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-primary-soft text-primary rounded-lg">
-                          <Building2 className="w-5 h-5" />
+                        <div className="p-1 bg-slate-100 border border-slate-200 text-primary rounded-lg overflow-hidden flex items-center justify-center w-9 h-9">
+                          {org.logoUrl ? (
+                            <img src={org.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                          ) : (
+                            <Building2 className="w-5 h-5 text-text-secondary" />
+                          )}
                         </div>
                         <span className="font-medium text-text-primary">{org.name}</span>
                       </div>
@@ -326,6 +363,48 @@ export default function OrganizationsPage() {
                   <span>{formError}</span>
                 </div>
               )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  Logo Organisasi
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 border border-border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    {formData.logoUrl ? (
+                      <img src={formData.logoUrl} alt="Preview Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <Building2 className="w-8 h-8 text-text-muted" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      id="logo-upload-input"
+                    />
+                    <label
+                      htmlFor="logo-upload-input"
+                      className="cursor-pointer inline-flex items-center px-3.5 py-2 border border-border text-sm font-medium rounded-lg text-text-secondary bg-surface hover:bg-slate-50 transition-colors shadow-sm"
+                    >
+                      {uploadingLogo ? 'Mengunggah...' : 'Pilih File Gambar'}
+                    </label>
+                    {formData.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, logoUrl: '' })}
+                        className="ml-2 inline-flex items-center px-2 py-2 border border-danger/20 text-sm font-medium rounded-lg text-danger bg-danger-soft hover:bg-danger/10 transition-colors"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                    <p className="text-xs text-text-muted mt-1.5">
+                      PNG, JPG, atau SVG (Maks. 2MB).
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
