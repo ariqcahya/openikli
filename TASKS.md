@@ -150,66 +150,66 @@ Status:
 
 ### Database Models
 
-- [ ] Buat model `Survey`.
-- [ ] Buat model `SurveyQuestion`.
-- [ ] Buat enum survey status:
-  - [ ] `DRAFT`
-  - [ ] `ACTIVE`
-  - [ ] `CLOSED`
-  - [ ] `ANALYZED`
-  - [ ] `ARCHIVED`
-- [ ] Buat enum question type:
-  - [ ] `RATING`
-  - [ ] `TEXT`
-  - [ ] `TEXTAREA`
-  - [ ] `SELECT`
-  - [ ] `MULTI_SELECT`
-  - [ ] `LOCATION`
-  - [ ] `FILE`
-- [ ] Migration database.
+- [x] Buat model `Survey`.
+- [x] Buat model `SurveyQuestion`.
+- [x] Buat enum survey status:
+  - [x] `DRAFT`
+  - [x] `ACTIVE`
+  - [x] `CLOSED`
+  - [x] `ANALYZED`
+  - [x] `ARCHIVED`
+- [x] Buat enum question type:
+  - [x] `RATING`
+  - [x] `TEXT`
+  - [x] `TEXTAREA`
+  - [x] `SELECT`
+  - [x] `MULTI_SELECT`
+  - [x] `LOCATION`
+  - [x] `FILE`
+- [x] Migration database.
 
 ### Survey CRUD
 
-- [ ] Halaman daftar survei.
-- [ ] Form buat survei.
-- [ ] Form edit survei.
-- [ ] Detail survei.
-- [ ] Duplicate survei.
-- [ ] Publish survei.
-- [ ] Close survei.
-- [ ] Archive survei.
-- [ ] Empty state survei.
+- [x] Halaman daftar survei.
+- [x] Form buat survei.
+- [x] Form edit survei.
+- [x] Detail survei.
+- [x] Duplicate survei.
+- [x] Publish survei.
+- [x] Close survei.
+- [x] Archive survei.
+- [x] Empty state survei.
 
 ### Question Builder
 
-- [ ] Tambah pertanyaan.
-- [ ] Edit pertanyaan.
-- [ ] Hapus pertanyaan.
-- [ ] Reorder pertanyaan.
-- [ ] Atur indikator.
-- [ ] Atur bobot.
-- [ ] Atur wajib/tidak wajib.
-- [ ] Atur opsi untuk select/multi-select.
-- [ ] Preview form.
-- [ ] Validasi pertanyaan.
+- [x] Tambah pertanyaan.
+- [x] Edit pertanyaan.
+- [x] Hapus pertanyaan.
+- [x] Reorder pertanyaan.
+- [x] Atur indikator.
+- [x] Atur bobot.
+- [x] Atur wajib/tidak wajib.
+- [x] Atur opsi untuk select/multi-select.
+- [x] Preview form.
+- [x] Validasi pertanyaan.
 
 ### Public Link
 
-- [ ] Generate public ID.
-- [ ] Generate public URL.
-- [ ] Generate QR code.
-- [ ] Copy link button.
-- [ ] Preview public survey.
+- [x] Generate public ID.
+- [x] Generate public URL.
+- [x] Generate QR code.
+- [x] Copy link button.
+- [x] Preview public survey.
 
 ### Acceptance
 
-- [ ] Admin dapat membuat survei.
-- [ ] Admin dapat membuat pertanyaan rating dan teks.
-- [ ] Admin dapat publish survei.
-- [ ] Public link tersedia.
-- [ ] DRAFT tidak bisa diisi publik.
-- [ ] ACTIVE bisa diisi publik.
-- [ ] CLOSED tidak bisa diisi publik.
+- [x] Admin dapat membuat survei.
+- [x] Admin dapat membuat pertanyaan rating dan teks.
+- [x] Admin dapat publish survei.
+- [x] Public link tersedia.
+- [x] DRAFT tidak bisa diisi publik.
+- [x] ACTIVE bisa diisi publik.
+- [x] CLOSED tidak bisa diisi publik.
 
 ---
 
