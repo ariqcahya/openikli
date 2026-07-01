@@ -58,7 +58,6 @@ export default function PublicSurveyFormPage() {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
-  const [infrastructureTypes, setInfrastructureTypes] = useState<InfrastructureType[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +65,6 @@ export default function PublicSurveyFormPage() {
 
   // Form State
   const [regionId, setRegionId] = useState('');
-  const [infrastructureTypeId, setInfrastructureTypeId] = useState('');
   const [respondentAge, setRespondentAge] = useState('');
   const [respondentGender, setRespondentGender] = useState('');
   const [respondentJob, setRespondentJob] = useState('');
@@ -103,21 +101,6 @@ export default function PublicSurveyFormPage() {
         if (regionsRes.ok) {
           const regionsData = await regionsRes.json();
           setRegions(regionsData);
-        }
-
-        // 3. Fetch Infrastructure Types
-        const infraRes = await fetch('/api/infrastructure-types');
-        if (infraRes.ok) {
-          const infraData = await infraRes.json();
-          setInfrastructureTypes(infraData);
-        } else {
-          setInfrastructureTypes([
-            { id: '1', name: 'Jalan Raya & Jembatan', code: 'JALAN' },
-            { id: '2', name: 'Sistem Sanitasi & Limbah', code: 'SANITASI' },
-            { id: '3', name: 'Sistem Penyediaan Air Bersih', code: 'AIR_BERSIH' },
-            { id: '4', name: 'Fasilitas Persampahan', code: 'PERSAMPAHAN' },
-            { id: '5', name: 'Drainase Perkotaan', code: 'DRAINASE' },
-          ]);
         }
 
       } catch (err: any) {
@@ -174,6 +157,18 @@ export default function PublicSurveyFormPage() {
       alert('Pilih Wilayah Anda terlebih dahulu.');
       return;
     }
+    if (!respondentAge) {
+      alert('Usia responden wajib diisi.');
+      return;
+    }
+    if (!respondentGender) {
+      alert('Jenis Kelamin responden wajib diisi.');
+      return;
+    }
+    if (!respondentJob) {
+      alert('Pekerjaan responden wajib diisi.');
+      return;
+    }
 
     // Check required questions
     for (const q of questions) {
@@ -205,10 +200,10 @@ export default function PublicSurveyFormPage() {
         },
         body: JSON.stringify({
           regionId,
-          infrastructureTypeId: infrastructureTypeId || null,
-          respondentAge: respondentAge || null,
-          respondentGender: respondentGender || null,
-          respondentJob: respondentJob || null,
+          infrastructureTypeId: null,
+          respondentAge: respondentAge ? parseInt(respondentAge, 10) : null,
+          respondentGender,
+          respondentJob,
           gpsLat,
           gpsLng,
           notes,
@@ -347,42 +342,10 @@ export default function PublicSurveyFormPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">
-                  Jenis Infrastruktur yang Diulas
+                  Jenis Kelamin <span className="text-destructive">*</span>
                 </label>
                 <select
-                  value={infrastructureTypeId}
-                  onChange={(e) => setInfrastructureTypeId(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                >
-                  <option value="">-- Pilih Jenis Infrastruktur --</option>
-                  {infrastructureTypes.map((infra) => (
-                    <option key={infra.id} value={infra.id}>
-                      {infra.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">
-                  Usia Responden (Tahun)
-                </label>
-                <input
-                  type="number"
-                  placeholder="Contoh: 35"
-                  value={respondentAge}
-                  onChange={(e) => setRespondentAge(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">
-                  Jenis Kelamin
-                </label>
-                <select
+                  required
                   value={respondentGender}
                   onChange={(e) => setRespondentGender(e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
@@ -392,18 +355,45 @@ export default function PublicSurveyFormPage() {
                   <option value="P">Perempuan</option>
                 </select>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">
+                  Usia Responden (Tahun) <span className="text-destructive">*</span>
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max="120"
+                  placeholder="Contoh: 35"
+                  value={respondentAge}
+                  onChange={(e) => setRespondentAge(e.target.value)}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                />
+              </div>
 
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">
-                  Pekerjaan
+                  Pekerjaan <span className="text-destructive">*</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Karyawan Swasta"
+                <select
+                  required
                   value={respondentJob}
                   onChange={(e) => setRespondentJob(e.target.value)}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                />
+                >
+                  <option value="">-- Pilih Pekerjaan --</option>
+                  <option value="PNS/TNI/Polri">PNS/TNI/Polri</option>
+                  <option value="Karyawan Swasta">Karyawan Swasta</option>
+                  <option value="Wiraswasta">Wiraswasta</option>
+                  <option value="Petani/Nelayan">Petani/Nelayan</option>
+                  <option value="Buruh/Pekerja Harian">Buruh/Pekerja Harian</option>
+                  <option value="Ibu Rumah Tangga">Ibu Rumah Tangga</option>
+                  <option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
               </div>
             </div>
 
@@ -441,98 +431,129 @@ export default function PublicSurveyFormPage() {
             </div>
           </div>
 
-          {/* Section: Pertanyaan Kuesioner */}
-          <div className="space-y-4">
-            <h3 className="text-base font-bold text-text-primary px-1 flex items-center space-x-2">
-              <span>Pertanyaan Penilaian</span>
-            </h3>
-
+          {/* Section: Pertanyaan Kuesioner Grouped by Indicator */}
+          <div className="space-y-6">
             {questions.length === 0 ? (
               <div className="bg-surface rounded-xl border border-border p-8 text-center text-sm text-text-secondary">
                 Belum ada pertanyaan kuesioner yang dikonfigurasi untuk survei ini.
               </div>
             ) : (
-              questions.map((q, idx) => (
-                <div key={q.id} className="bg-surface rounded-xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <div className="flex items-center space-x-2 text-xs text-text-muted font-mono mb-1">
-                        <span>INDIKATOR: {q.indicatorCode}</span>
-                        {q.isRequired && (
-                          <span className="bg-destructive/10 text-destructive text-[10px] px-1.5 py-0.5 rounded-full font-sans uppercase">
-                            Wajib
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-sm font-semibold text-text-primary leading-snug">
-                        {idx + 1}. {q.questionText}
-                      </h4>
-                      {q.helpText && (
-                        <p className="text-xs text-text-secondary mt-1">{q.helpText}</p>
-                      )}
-                    </div>
-                  </div>
+              (() => {
+                // Group questions by indicatorName or indicatorCode
+                const grouped: Record<string, { indicatorCode: string; items: typeof questions }> = {};
+                questions.forEach((q) => {
+                  const key = q.indicatorName || q.indicatorCode || 'Umum';
+                  if (!grouped[key]) {
+                    grouped[key] = { indicatorCode: q.indicatorCode || 'UMUM', items: [] };
+                  }
+                  grouped[key].items.push(q);
+                });
 
-                  {/* Rendering inputs depending on type */}
-                  <div>
-                    {q.questionType === 'RATING' && (
-                      <div className="flex items-center space-x-2 mt-2">
-                        {Array.from({ length: survey.scoringScale }).map((_, scaleIdx) => {
-                          const val = scaleIdx + 1;
-                          const isSelected = answers[q.id]?.ratingValue === val;
+                let globalIdx = 0;
+
+                return Object.keys(grouped).map((groupName) => {
+                  const group = grouped[groupName];
+                  return (
+                    <div key={groupName} className="space-y-4">
+                      <div className="bg-primary/5 border border-primary/10 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                        <h4 className="text-xs font-extrabold text-primary uppercase tracking-wider">
+                          Indikator: {groupName}
+                        </h4>
+                        <span className="text-[10px] font-semibold font-mono bg-primary-soft text-primary-text px-2 py-0.5 rounded uppercase">
+                          Kode: {group.indicatorCode}
+                        </span>
+                      </div>
+
+                      <div className="space-y-4">
+                        {group.items.map((q) => {
+                          globalIdx++;
+                          const curIdx = globalIdx;
                           return (
-                            <button
-                              key={scaleIdx}
-                              type="button"
-                              onClick={() => handleAnswerChange(q.id, 'RATING', val)}
-                              className={`w-10 h-10 rounded-full border text-sm font-bold flex items-center justify-center transition-all ${
-                                isSelected
-                                  ? 'bg-primary border-primary text-white scale-110 shadow-sm'
-                                  : 'border-border bg-background hover:bg-surface text-text-secondary'
-                              }`}
-                            >
-                              {val}
-                            </button>
+                            <div key={q.id} className="bg-surface rounded-xl border border-border p-6 shadow-sm space-y-4">
+                              <div className="flex justify-between items-start gap-4">
+                                <div>
+                                  <div className="flex items-center space-x-2 text-xs text-text-muted font-mono mb-1">
+                                    {q.isRequired && (
+                                      <span className="bg-destructive/10 text-destructive text-[10px] px-1.5 py-0.5 rounded-full font-sans uppercase">
+                                        Wajib
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h4 className="text-sm font-semibold text-text-primary leading-snug">
+                                    {curIdx}. {q.questionText}
+                                  </h4>
+                                  {q.helpText && (
+                                    <p className="text-xs text-text-secondary mt-1">{q.helpText}</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Rendering inputs depending on type */}
+                              <div>
+                                {q.questionType === 'RATING' && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    {Array.from({ length: survey.scoringScale }).map((_, scaleIdx) => {
+                                      const val = scaleIdx + 1;
+                                      const isSelected = answers[q.id]?.ratingValue === val;
+                                      return (
+                                        <button
+                                          key={scaleIdx}
+                                          type="button"
+                                          onClick={() => handleAnswerChange(q.id, 'RATING', val)}
+                                          className={`w-10 h-10 rounded-full border text-sm font-bold flex items-center justify-center transition-all ${
+                                            isSelected
+                                              ? 'bg-primary border-primary text-white scale-110 shadow-sm'
+                                              : 'border-border bg-background hover:bg-surface text-text-secondary'
+                                          }`}
+                                        >
+                                          {val}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {(q.questionType === 'TEXT' || q.questionType === 'LOCATION') && (
+                                  <input
+                                    type="text"
+                                    placeholder="Ketik jawaban Anda..."
+                                    onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                                  />
+                                )}
+
+                                {q.questionType === 'TEXTAREA' && (
+                                  <textarea
+                                    rows={3}
+                                    placeholder="Ketik deskripsi lengkap atau jawaban Anda di sini..."
+                                    onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                                  />
+                                )}
+
+                                {q.questionType === 'SELECT' && (
+                                  <select
+                                    onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
+                                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
+                                  >
+                                    <option value="">-- Pilih opsi --</option>
+                                    {Array.isArray(q.options) &&
+                                      q.options.map((opt: any, optIdx: number) => (
+                                        <option key={optIdx} value={opt}>
+                                          {opt}
+                                        </option>
+                                      ))}
+                                  </select>
+                                )}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
-                    )}
-
-                    {(q.questionType === 'TEXT' || q.questionType === 'LOCATION') && (
-                      <input
-                        type="text"
-                        placeholder="Ketik jawaban Anda..."
-                        onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                      />
-                    )}
-
-                    {q.questionType === 'TEXTAREA' && (
-                      <textarea
-                        rows={3}
-                        placeholder="Ketik deskripsi lengkap atau jawaban Anda di sini..."
-                        onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                      />
-                    )}
-
-                    {q.questionType === 'SELECT' && (
-                      <select
-                        onChange={(e) => handleAnswerChange(q.id, q.questionType, e.target.value)}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-primary transition-colors"
-                      >
-                        <option value="">-- Pilih opsi --</option>
-                        {Array.isArray(q.options) &&
-                          q.options.map((opt: any, optIdx: number) => (
-                            <option key={optIdx} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                      </select>
-                    )}
-                  </div>
-                </div>
-              ))
+                    </div>
+                  );
+                });
+              })()
             )}
           </div>
 
