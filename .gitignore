@@ -37,7 +37,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Ignore internal plans and agent markdown files
-*.md
-!README.md
-!CONTRIBUTING.md
-!CODE_OF_CONDUCT.md
+PLAN.md
+PRD.md
+CODING_AGENT_PROMPT.md
+DESIGN_GUIDELINES.md
