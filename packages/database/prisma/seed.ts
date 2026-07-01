@@ -62,6 +62,48 @@ async function main() {
   });
   console.log(`Created membership role: ${membership.role}`);
 
+  // Seed other roles
+  const otherUsers = [
+    { phone: '081234567891', name: 'Admin Daerah Banyumas', role: Role.ADMIN_DAERAH },
+    { phone: '081234567892', name: 'Analis Data Banyumas', role: Role.ANALIS },
+    { phone: '081234567893', name: 'Enumerator Banyumas', role: Role.ENUMERATOR },
+    { phone: '081234567894', name: 'Viewer Publik Banyumas', role: Role.VIEWER },
+  ];
+
+  for (const u of otherUsers) {
+    const userObj = await prisma.user.upsert({
+      where: { phone: u.phone },
+      update: {
+        password: hashedPassword,
+        name: u.name,
+      },
+      create: {
+        phone: u.phone,
+        password: hashedPassword,
+        name: u.name,
+        isActive: true
+      }
+    });
+
+    await prisma.organizationMember.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: org.id,
+          userId: userObj.id
+        }
+      },
+      update: {
+        role: u.role
+      },
+      create: {
+        organizationId: org.id,
+        userId: userObj.id,
+        role: u.role
+      }
+    });
+    console.log(`Created user ${u.name} (${u.role}) with phone: ${u.phone}`);
+  }
+
   // 4. Create Default Infrastructure Types
   const defaultInfrastructures = [
     { code: 'jalan', name: 'Jalan', description: 'Infrastruktur jalan raya, kabupaten, dan lingkungan' },
@@ -166,7 +208,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
-    process.exit(1);
+    throw e;
   })
   .finally(async () => {
     await prisma.$disconnect();

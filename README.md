@@ -92,12 +92,23 @@ http://localhost:3001
 
 ### Akun Login Bawaan (Seed Data)
 
-Setelah melakukan `pnpm db:seed`, Anda dapat masuk ke dashboard menggunakan kredensial bawaan berikut:
+Setelah melakukan `pnpm db:seed`, Anda dapat masuk ke dashboard menggunakan kredensial bawaan berikut (seluruh akun menggunakan password: `adminpassword123`):
 
 *   **Super Admin**:
     *   **Nomor HP**: `081234567890`
-    *   **Password**: `adminpassword123`
     *   **Role**: `SUPER_ADMIN`
+*   **Admin Daerah**:
+    *   **Nomor HP**: `081234567891`
+    *   **Role**: `ADMIN_DAERAH`
+*   **Analis**:
+    *   **Nomor HP**: `081234567892`
+    *   **Role**: `ANALIS`
+*   **Enumerator**:
+    *   **Nomor HP**: `081234567893`
+    *   **Role**: `ENUMERATOR`
+*   **Viewer**:
+    *   **Nomor HP**: `081234567894`
+    *   **Role**: `VIEWER`
 
 ---
 
