@@ -15,70 +15,70 @@ Status:
 
 ### Repository
 
-- [ ] Inisialisasi Git repository.
-- [ ] Tambahkan `README.md`.
-- [ ] Tambahkan `CONTRIBUTING.md`.
-- [ ] Tambahkan `LICENSE`.
-- [ ] Tambahkan `.gitignore`.
-- [ ] Tambahkan `.env.example`.
+- [x] Inisialisasi Git repository.
+- [x] Tambahkan `README.md`.
+- [x] Tambahkan `CONTRIBUTING.md`.
+- [x] Tambahkan `LICENSE`.
+- [x] Tambahkan `.gitignore`.
+- [x] Tambahkan `.env.example`.
 
 
 ### Monorepo
 
-- [ ] Setup `pnpm workspace`.
-- [ ] Buat `apps/web`.
-- [ ] Buat `packages/database`.
-- [ ] Buat `packages/shared`.
-- [ ] Buat `packages/ui`.
-- [ ] Setup root `package.json`.
-- [ ] Setup workspace scripts:
-  - [ ] `dev`
-  - [ ] `build`
-  - [ ] `lint`
-  - [ ] `typecheck`
-  - [ ] `test`
-  - [ ] `db:migrate`
-  - [ ] `db:seed`
+- [x] Setup `pnpm workspace`.
+- [x] Buat `apps/web`.
+- [x] Buat `packages/database`.
+- [x] Buat `packages/shared`.
+- [x] Buat `packages/ui`.
+- [x] Setup root `package.json`.
+- [x] Setup workspace scripts:
+  - [x] `dev`
+  - [x] `build`
+  - [x] `lint`
+  - [x] `typecheck`
+  - [x] `test`
+  - [x] `db:migrate`
+  - [x] `db:seed`
 
 ### Web App
 
-- [ ] Setup Next.js.
-- [ ] Setup TypeScript.
-- [ ] Setup Tailwind CSS.
-- [ ] Setup shadcn/ui.
-- [ ] Setup base layout.
-- [ ] Setup dashboard shell.
-- [ ] Setup public survey layout.
-- [ ] Setup theme tokens sesuai spesifikasi desain UI/UX.
+- [x] Setup Next.js.
+- [x] Setup TypeScript.
+- [x] Setup Tailwind CSS.
+- [x] Setup shadcn/ui.
+- [x] Setup base layout.
+- [x] Setup dashboard shell.
+- [x] Setup public survey layout.
+- [x] Setup theme tokens sesuai spesifikasi desain UI/UX.
 
 ### Database
 
-- [ ] Setup Prisma.
-- [ ] Setup PostgreSQL + PostGIS.
-- [ ] Buat database package.
-- [ ] Buat initial migration.
-- [ ] Enable extension PostGIS.
-- [ ] Setup Prisma client.
-- [ ] Setup seed admin.
+- [x] Setup Prisma.
+- [x] Setup PostgreSQL + PostGIS.
+- [x] Buat database package.
+- [x] Buat initial migration.
+- [x] Enable extension PostGIS.
+- [x] Setup Prisma client.
+- [x] Setup seed admin.
 
 ### Docker
 
-- [ ] Buat `docker-compose.yml`.
-- [ ] Buat `apps/web/Dockerfile`.
-- [ ] Pastikan service `opensource-ikli-db` berjalan.
-- [ ] Pastikan service `opensource-ikli-web` berjalan.
-- [ ] Test `docker compose up -d`.
-- [ ] Dokumentasikan deploy via Docker Compose.
+- [x] Buat `docker-compose.yml`.
+- [x] Buat `apps/web/Dockerfile`.
+- [x] Pastikan service `opensource-ikli-db` berjalan.
+- [x] Pastikan service `opensource-ikli-web` berjalan.
+- [x] Test `docker compose up -d`.
+- [x] Dokumentasikan deploy via Docker Compose.
 
 ### Quality
 
-- [ ] Setup ESLint.
-- [ ] Setup Prettier.
-- [ ] Setup TypeScript strict mode.
-- [ ] Setup test framework minimal.
-- [ ] Pastikan build sukses.
-- [ ] Pastikan lint sukses.
-- [ ] Pastikan typecheck sukses.
+- [x] Setup ESLint.
+- [x] Setup Prettier.
+- [x] Setup TypeScript strict mode.
+- [x] Setup test framework minimal.
+- [x] Pastikan build sukses.
+- [x] Pastikan lint sukses.
+- [x] Pastikan typecheck sukses.
 
 ---
 
