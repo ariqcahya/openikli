@@ -371,7 +371,7 @@ Status:
 - [ ] Filter memengaruhi data.
 - [ ] Tidak ada angka tanpa label.
 - [ ] Tidak ada skor tanpa response_count.
-- [ ] UI clean, civic, tidak AI-ish.
+- [ ] Tampilan antarmuka (UI) bersih, formal (civic), dan profesional.
 
 ---
 
