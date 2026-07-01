@@ -86,63 +86,63 @@ Status:
 
 ### Database Models
 
-- [ ] Buat model `User`.
-- [ ] Buat model `Organization`.
-- [ ] Buat model `OrganizationMember`.
-- [ ] Buat enum role:
-  - [ ] `SUPER_ADMIN`
-  - [ ] `ADMIN_DAERAH`
-  - [ ] `ANALIS`
-  - [ ] `ENUMERATOR`
-  - [ ] `VIEWER`
-- [ ] Buat model `AuditLog`.
-- [ ] Migration database.
+- [x] Buat model `User`.
+- [x] Buat model `Organization`.
+- [x] Buat model `OrganizationMember`.
+- [x] Buat enum role:
+  - [x] `SUPER_ADMIN`
+  - [x] `ADMIN_DAERAH`
+  - [x] `ANALIS`
+  - [x] `ENUMERATOR`
+  - [x] `VIEWER`
+- [x] Buat model `AuditLog`.
+- [x] Migration database.
 
 ### Auth
 
-- [ ] Implement login.
-- [ ] Implement logout.
-- [ ] Implement session.
-- [ ] Implement password hashing.
-- [ ] Implement `getCurrentUser`.
-- [ ] Implement route guard.
-- [ ] Implement middleware dashboard auth.
-- [ ] Implement public route exception untuk survei publik.
+- [x] Implement login.
+- [x] Implement logout.
+- [x] Implement session.
+- [x] Implement password hashing.
+- [x] Implement `getCurrentUser`.
+- [x] Implement route guard.
+- [x] Implement middleware dashboard auth.
+- [x] Implement public route exception untuk survei publik.
 
 ### RBAC
 
-- [ ] Implement permission helper.
-- [ ] Implement organization scope helper.
-- [ ] Implement role guard.
-- [ ] Pastikan user hanya melihat data organisasi sendiri.
-- [ ] Pastikan Super Admin bisa melihat semua organisasi.
+- [x] Implement permission helper.
+- [x] Implement organization scope helper.
+- [x] Implement role guard.
+- [x] Pastikan user hanya melihat data organisasi sendiri.
+- [x] Pastikan Super Admin bisa melihat semua organisasi.
 
 ### Organization UI
 
-- [ ] Halaman daftar organisasi.
-- [ ] Form tambah organisasi.
-- [ ] Form edit organisasi.
+- [x] Halaman daftar organisasi.
+- [x] Form tambah organisasi.
+- [x] Form edit organisasi.
 - [ ] Upload logo organisasi.
 - [ ] Organization switcher.
-- [ ] Empty state organisasi.
+- [x] Empty state organisasi.
 
 ### User Management UI
 
-- [ ] Halaman daftar user.
-- [ ] Form tambah user.
-- [ ] Form edit user.
-- [ ] Assign role.
-- [ ] Nonaktifkan user.
+- [x] Halaman daftar user.
+- [x] Form tambah user.
+- [x] Form edit user.
+- [x] Assign role.
+- [x] Nonaktifkan user.
 - [ ] Audit log perubahan user.
 
 ### Acceptance
 
-- [ ] Super Admin dapat login.
-- [ ] Super Admin dapat membuat organisasi.
-- [ ] Admin Daerah dapat mengelola user organisasinya.
+- [x] Super Admin dapat login.
+- [x] Super Admin dapat membuat organisasi.
+- [x] Admin Daerah dapat mengelola user organisasinya.
 - [ ] Viewer tidak dapat mengubah data.
-- [ ] Enumerator tidak dapat mengakses dashboard penuh.
-- [ ] Audit log tercatat.
+- [x] Enumerator tidak dapat mengakses dashboard penuh.
+- [x] Audit log tercatat.
 
 ---
 

@@ -27,14 +27,37 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  const navItems = [
+  // Redirect ENUMERATOR out of dashboard
+  if (session.role === 'ENUMERATOR') {
+    redirect('/login?error=unauthorized_role');
+  }
+
+  interface NavItem {
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+    disabled?: boolean;
+  }
+
+  const navItems: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  ];
+
+  if (session.role === 'SUPER_ADMIN') {
+    navItems.push({ name: 'Kelola Organisasi', href: '/dashboard/organizations', icon: Building2 });
+  }
+
+  if (session.role === 'SUPER_ADMIN' || session.role === 'ADMIN_DAERAH') {
+    navItems.push({ name: 'Kelola Pengguna', href: '/dashboard/users', icon: UserCheck });
+  }
+
+  navItems.push(
     { name: 'Kelola Survei', href: '#', icon: FileSpreadsheet, disabled: true },
     { name: 'Data Responden', href: '#', icon: Users, disabled: true },
     { name: 'Peta Wilayah', href: '#', icon: Map, disabled: true },
     { name: 'Analisis Komentar', href: '#', icon: BrainCircuit, disabled: true },
-    { name: 'Pengaturan', href: '#', icon: Settings, disabled: true },
-  ];
+    { name: 'Pengaturan', href: '#', icon: Settings, disabled: true }
+  );
 
   return (
     <div className="flex-1 flex overflow-hidden h-screen bg-background">
