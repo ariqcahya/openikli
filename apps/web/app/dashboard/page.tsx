@@ -3,8 +3,14 @@ import { getSession } from '@/lib/auth';
 import { prisma } from 'database';
 import { FilePlus2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 
+import { redirect } from 'next/navigation';
+
 export default async function DashboardPage() {
   const session = await getSession();
+
+  if (session?.role === 'ENUMERATOR') {
+    redirect('/dashboard/responses');
+  }
 
   // Load infrastructure count just to show database integration is working
   let infrastructureCount = 0;

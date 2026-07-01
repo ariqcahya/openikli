@@ -217,53 +217,53 @@ Status:
 
 ### Database Models
 
-- [ ] Buat model `SurveyResponse`.
-- [ ] Buat model `SurveyAnswer`.
-- [ ] Tambahkan relasi ke survey.
-- [ ] Tambahkan relasi ke region.
-- [ ] Tambahkan relasi ke infrastructure type.
-- [ ] Tambahkan metadata responden opsional.
-- [ ] Migration database.
+- [x] Buat model `SurveyResponse`.
+- [x] Buat model `SurveyAnswer`.
+- [x] Tambahkan relasi ke survey.
+- [x] Tambahkan relasi ke region.
+- [x] Tambahkan relasi ke infrastructure type.
+- [x] Tambahkan metadata responden opsional.
+- [x] Migration database.
 
 ### Public Survey Form
 
-- [ ] Halaman public survey.
-- [ ] Load survey by public ID.
-- [ ] Validasi survey ACTIVE.
-- [ ] Tampilkan deskripsi survei.
-- [ ] Pilih wilayah.
-- [ ] Pilih jenis infrastruktur.
-- [ ] Render question dynamically.
-- [ ] Validasi required questions.
-- [ ] Submit response.
-- [ ] Success page.
-- [ ] Mobile-first layout.
+- [x] Halaman public survey.
+- [x] Load survey by public ID.
+- [x] Validasi survey ACTIVE.
+- [x] Tampilkan deskripsi survei.
+- [x] Pilih wilayah.
+- [x] Pilih jenis infrastruktur.
+- [x] Render question dynamically.
+- [x] Validasi required questions.
+- [x] Submit response.
+- [x] Success page.
+- [x] Mobile-first layout.
 
 ### Enumerator Mode
 
-- [ ] Halaman survei aktif untuk enumerator.
-- [ ] Input responden oleh enumerator.
-- [ ] Riwayat input enumerator.
-- [ ] Catatan lapangan.
-- [ ] GPS opsional.
+- [x] Halaman survei aktif untuk enumerator.
+- [x] Input responden oleh enumerator.
+- [x] Riwayat input enumerator.
+- [x] Catatan lapangan.
+- [x] GPS opsional.
 
 ### Admin Responses
 
-- [ ] Halaman daftar responden.
-- [ ] Detail jawaban responden.
-- [ ] Filter by survey.
-- [ ] Filter by region.
-- [ ] Filter by infrastructure.
-- [ ] Export basic placeholder.
+- [x] Halaman daftar responden.
+- [x] Detail jawaban responden.
+- [x] Filter by survey.
+- [x] Filter by region.
+- [x] Filter by infrastructure.
+- [x] Export basic placeholder.
 
 ### Acceptance
 
-- [ ] Public user dapat submit survei.
-- [ ] Jawaban tersimpan.
-- [ ] Jawaban rating dan text tersimpan sesuai pertanyaan.
-- [ ] Enumerator dapat input survei.
-- [ ] Enumerator hanya melihat input sendiri.
-- [ ] Admin dapat melihat daftar responden.
+- [x] Public user dapat submit survei.
+- [x] Jawaban tersimpan.
+- [x] Jawaban rating dan text tersimpan sesuai pertanyaan.
+- [x] Enumerator dapat input survei.
+- [x] Enumerator hanya melihat input sendiri.
+- [x] Admin dapat melihat daftar responden.
 
 ---
 

@@ -1,4 +1,4 @@
-import { PrismaClient, Role, OrganizationType } from '@prisma/client';
+import { PrismaClient, Role, OrganizationType, RegionLevel } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -103,6 +103,62 @@ async function main() {
     order++;
   }
   console.log('Seeded default infrastructure types successfully.');
+
+  // 5. Seed default regions
+  const sampleDistricts = [
+    {
+      name: 'Kecamatan Purwokerto Timur',
+      bpsCode: '3302110',
+      villages: [
+        { name: 'Kelurahan Arcawinangun', bpsCode: '3302110001' },
+        { name: 'Kelurahan Kranji', bpsCode: '3302110002' },
+      ],
+    },
+    {
+      name: 'Kecamatan Purwokerto Selatan',
+      bpsCode: '3302120',
+      villages: [
+        { name: 'Kelurahan Karangklesem', bpsCode: '3302120001' },
+        { name: 'Kelurahan Tanjung', bpsCode: '3302120002' },
+      ],
+    },
+  ];
+
+  for (const dist of sampleDistricts) {
+    const parentRegion = await prisma.region.upsert({
+      where: { id: `dist-id-${dist.bpsCode}` },
+      update: {
+        name: dist.name,
+        bpsCode: dist.bpsCode,
+      },
+      create: {
+        id: `dist-id-${dist.bpsCode}`,
+        organizationId: org.id,
+        name: dist.name,
+        bpsCode: dist.bpsCode,
+        level: RegionLevel.DISTRICT,
+      },
+    });
+
+    for (const vil of dist.villages) {
+      await prisma.region.upsert({
+        where: { id: `vil-id-${vil.bpsCode}` },
+        update: {
+          name: vil.name,
+          bpsCode: vil.bpsCode,
+        },
+        create: {
+          id: `vil-id-${vil.bpsCode}`,
+          organizationId: org.id,
+          parentId: parentRegion.id,
+          name: vil.name,
+          bpsCode: vil.bpsCode,
+          level: RegionLevel.VILLAGE,
+        },
+      });
+    }
+  }
+  console.log('Seeded sample regions successfully.');
 
   console.log('Seeding completed successfully!');
 }

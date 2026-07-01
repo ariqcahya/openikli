@@ -27,10 +27,7 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  // Redirect ENUMERATOR out of dashboard
-  if (session.role === 'ENUMERATOR') {
-    redirect('/login?error=unauthorized_role');
-  }
+
 
   interface NavItem {
     name: string;
@@ -54,7 +51,7 @@ export default async function DashboardLayout({
   navItems.push({ name: 'Kelola Survei', href: '/dashboard/surveys', icon: FileSpreadsheet });
 
   navItems.push(
-    { name: 'Data Responden', href: '#', icon: Users, disabled: true },
+    { name: 'Data Responden', href: '/dashboard/responses', icon: Users },
     { name: 'Peta Wilayah', href: '#', icon: Map, disabled: true },
     { name: 'Analisis Komentar', href: '#', icon: BrainCircuit, disabled: true },
     { name: 'Pengaturan', href: '#', icon: Settings, disabled: true }
