@@ -26,6 +26,7 @@ import {
   Layers,
   MapPin,
   Activity,
+  X,
 } from 'lucide-react';
 
 interface Question {
@@ -121,6 +122,91 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
     }
   }, [activeTab]);
 
+  // Indicator State
+  const [indicators, setIndicators] = useState<any[]>([]);
+  const [loadingIndicators, setLoadingIndicators] = useState(false);
+  const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
+  const [indicatorForm, setIndicatorForm] = useState({ id: '', code: '', name: '', description: '' });
+  const [indicatorError, setIndicatorError] = useState<string | null>(null);
+  const [savingIndicator, setSavingIndicator] = useState(false);
+
+  const fetchIndicators = async () => {
+    try {
+      setLoadingIndicators(true);
+      const res = await fetch(`/api/surveys/${surveyId}/indicators`);
+      if (res.ok) {
+        const data = await res.json();
+        setIndicators(data);
+      }
+    } catch (err) {
+      console.error('Gagal memuat indikator:', err);
+    } finally {
+      setLoadingIndicators(false);
+    }
+  };
+
+  const handleSaveIndicator = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!indicatorForm.code.trim() || !indicatorForm.name.trim()) {
+      setIndicatorError('Kode dan Nama Indikator wajib diisi');
+      return;
+    }
+
+    try {
+      setSavingIndicator(true);
+      setIndicatorError(null);
+
+      const isEdit = !!indicatorForm.id;
+      const url = isEdit
+        ? `/api/surveys/${surveyId}/indicators/${indicatorForm.id}`
+        : `/api/surveys/${surveyId}/indicators`;
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: indicatorForm.code,
+          name: indicatorForm.name,
+          description: indicatorForm.description,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal menyimpan indikator');
+      }
+
+      await fetchIndicators();
+      setIndicatorForm({ id: '', code: '', name: '', description: '' });
+    } catch (err: any) {
+      setIndicatorError(err.message || 'Gagal menyimpan indikator');
+    } finally {
+      setSavingIndicator(false);
+    }
+  };
+
+  const handleDeleteIndicator = async (indicatorId: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus indikator ini?')) return;
+
+    try {
+      setIndicatorError(null);
+      const res = await fetch(`/api/surveys/${surveyId}/indicators/${indicatorId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal menghapus indikator');
+      }
+
+      await fetchIndicators();
+    } catch (err: any) {
+      setIndicatorError(err.message || 'Gagal menghapus indikator');
+      alert(err.message);
+    }
+  };
+
   // Detail Form State
   const [detailsForm, setDetailsForm] = useState({
     title: '',
@@ -187,6 +273,9 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
         startDate: data.startDate ? data.startDate.split('T')[0] : '',
         endDate: data.endDate ? data.endDate.split('T')[0] : '',
       });
+
+      // Hydrate indicators list
+      await fetchIndicators();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -528,13 +617,26 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
               </p>
             </div>
             {!isReadOnly && (
-              <button
-                onClick={handleOpenAddQuestion}
-                className="inline-flex items-center px-3 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-medium rounded-lg shadow-sm transition-colors"
-              >
-                <Plus className="w-4 h-4 mr-1.5" />
-                Tambah Pertanyaan
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setIndicatorForm({ id: '', code: '', name: '', description: '' });
+                    setIndicatorError(null);
+                    setIsIndicatorModalOpen(true);
+                  }}
+                  className="inline-flex items-center px-3 py-2 border border-border bg-surface hover:bg-slate-50 text-text-secondary hover:text-text-primary text-xs font-medium rounded-lg shadow-sm transition-colors"
+                >
+                  <Layers className="w-4 h-4 mr-1.5" />
+                  Kelola Indikator
+                </button>
+                <button
+                  onClick={handleOpenAddQuestion}
+                  className="inline-flex items-center px-3 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-medium rounded-lg shadow-sm transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Tambah Pertanyaan
+                </button>
+              </div>
             )}
           </div>
 
@@ -1303,34 +1405,51 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Kode Indikator *
-                  </label>
-                  <input
-                    type="text"
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  Pilih Indikator *
+                </label>
+                {indicators.length === 0 ? (
+                  <div className="text-xs text-text-secondary bg-slate-50 border border-border p-3 rounded-lg flex items-center justify-between">
+                    <span>Belum ada master indikator. Buat indikator terlebih dahulu.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsQuestionModalOpen(false);
+                        setIsIndicatorModalOpen(true);
+                      }}
+                      className="text-primary font-bold hover:underline"
+                    >
+                      Kelola Indikator
+                    </button>
+                  </div>
+                ) : (
+                  <select
                     required
-                    placeholder="Contoh: JALAN_01"
                     value={questionForm.indicatorCode}
-                    onChange={(e) => setQuestionForm({ ...questionForm, indicatorCode: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Nama Indikator *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Kondisi Fisik Jalan"
-                    value={questionForm.indicatorName}
-                    onChange={(e) => setQuestionForm({ ...questionForm, indicatorName: e.target.value })}
+                    onChange={(e) => {
+                      const selectedInd = indicators.find((ind) => ind.code === e.target.value);
+                      setQuestionForm({
+                        ...questionForm,
+                        indicatorCode: e.target.value,
+                        indicatorName: selectedInd ? selectedInd.name : '',
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                  />
-                </div>
+                  >
+                    <option value="">-- Pilih Indikator --</option>
+                    {indicators.map((ind) => (
+                      <option key={ind.id} value={ind.code}>
+                        [{ind.code}] {ind.name}
+                      </option>
+                    ))}
+                    {questionForm.indicatorCode && !indicators.some(ind => ind.code === questionForm.indicatorCode) && (
+                      <option value={questionForm.indicatorCode}>
+                        [{questionForm.indicatorCode}] {questionForm.indicatorName || questionForm.indicatorCode} (Lama)
+                      </option>
+                    )}
+                  </select>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -1449,6 +1568,177 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Indicators Modal */}
+      {isIndicatorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="relative w-full max-w-4xl bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex items-center space-x-2">
+                <Layers className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-text-primary text-lg">Kelola Indikator Survei</h3>
+              </div>
+              <button
+                onClick={() => setIsIndicatorModalOpen(false)}
+                className="text-text-muted hover:text-text-secondary p-1 rounded-md hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-border h-[500px]">
+              {/* Left Side: Indicators List (3 cols) */}
+              <div className="col-span-3 p-6 overflow-y-auto flex flex-col h-full">
+                <h4 className="font-bold text-text-primary text-sm mb-3">Daftar Indikator</h4>
+                
+                {loadingIndicators ? (
+                  <div className="flex flex-col items-center justify-center py-20 flex-grow">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                    <span className="text-xs text-text-secondary">Memuat indikator...</span>
+                  </div>
+                ) : indicators.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 flex-grow text-center text-text-muted border-2 border-dashed border-border rounded-xl">
+                    <Layers className="w-10 h-10 mb-2 opacity-40" />
+                    <p className="text-sm font-semibold">Belum Ada Indikator</p>
+                    <p className="text-xs max-w-xs px-4">Gunakan form di sebelah kanan untuk menambahkan indikator kustom daerah Anda.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 flex-grow overflow-y-auto pr-1">
+                    {indicators.map((ind) => (
+                      <div
+                        key={ind.id}
+                        className={`p-3 border rounded-xl flex items-start justify-between transition-all ${
+                          indicatorForm.id === ind.id
+                            ? 'border-primary bg-primary-soft/10 shadow-sm'
+                            : 'border-border bg-slate-50/50 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="space-y-1 max-w-[80%]">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary font-mono font-bold text-[10px] rounded-md uppercase tracking-wider">
+                              {ind.code}
+                            </span>
+                            <h5 className="font-bold text-text-primary text-sm line-clamp-1">{ind.name}</h5>
+                          </div>
+                          {ind.description && (
+                            <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">{ind.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setIndicatorForm({
+                              id: ind.id,
+                              code: ind.code,
+                              name: ind.name,
+                              description: ind.description || '',
+                            })}
+                            className="p-1.5 text-text-secondary hover:text-primary hover:bg-white rounded-lg border border-transparent hover:border-border transition-all shadow-sm"
+                            title="Edit Indikator"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteIndicator(ind.id)}
+                            className="p-1.5 text-text-secondary hover:text-danger hover:bg-white rounded-lg border border-transparent hover:border-border transition-all shadow-sm"
+                            title="Hapus Indikator"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side: Form Create/Edit (2 cols) */}
+              <form onSubmit={handleSaveIndicator} className="col-span-2 p-6 flex flex-col justify-between h-full bg-slate-50/30">
+                <div className="space-y-4">
+                  <h4 className="font-bold text-text-primary text-sm">
+                    {indicatorForm.id ? 'Edit Indikator' : 'Tambah Indikator Baru'}
+                  </h4>
+
+                  {indicatorError && (
+                    <div className="p-3 bg-danger-soft border border-danger/10 text-danger-text text-xs rounded-lg flex items-start">
+                      <AlertTriangle className="w-3.5 h-3.5 mr-2 mt-0.5 shrink-0" />
+                      <span>{indicatorError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Kode Indikator *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: JALAN_01"
+                      value={indicatorForm.code}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, code: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Nama Indikator *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Kondisi Fisik Jalan"
+                      value={indicatorForm.name}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Deskripsi / Penjelasan
+                    </label>
+                    <textarea
+                      placeholder="Penjelasan singkat mengenai aspek indikator ini..."
+                      value={indicatorForm.description}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, description: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-4 border-t border-border mt-4">
+                  {indicatorForm.id && (
+                    <button
+                      type="button"
+                      onClick={() => setIndicatorForm({ id: '', code: '', name: '', description: '' })}
+                      className="flex-1 px-4 py-2 border border-border text-sm font-medium rounded-lg text-text-secondary hover:bg-white transition-colors"
+                    >
+                      Batal
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={savingIndicator}
+                    className="flex-grow px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center shadow-sm disabled:opacity-50"
+                  >
+                    {savingIndicator ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      indicatorForm.id ? 'Perbarui Indikator' : 'Tambah Indikator'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

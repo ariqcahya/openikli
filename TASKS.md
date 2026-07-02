@@ -328,6 +328,16 @@ Status:
 
 ---
 
+## Phase 4b — Dynamic Indicator CRUD System
+
+- [x] Definisikan model `SurveyIndicator` di schema.prisma dan jalankan migrasi database.
+- [x] Buat API CRUD untuk Indicator (`GET`, `POST`, `PUT`, `DELETE`).
+- [x] Buat UI Modal/Panel Kelola Indikator di halaman detail kuesioner.
+- [x] Ubah form pertanyaan untuk memilih indikator dari dropdown dinamis.
+- [x] Validasi integrasi kuesioner dengan indikator kustom baru.
+
+---
+
 ## Phase 5 — Dashboard IKLI
 
 ### Dashboard Overview

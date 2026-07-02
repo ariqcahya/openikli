@@ -168,6 +168,7 @@ model Survey {
   ikliScores     IkliScore[]
   analyses       AiCommentAnalysis[]
   recommendations AiRecommendation[]
+  indicators     SurveyIndicator[]
 
   @@map("surveys")
 }
@@ -327,4 +328,18 @@ model AuditLog {
   user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+model SurveyIndicator {
+  id          String   @id @default(uuid())
+  surveyId    String   @map("survey_id")
+  code        String
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+
+  @@unique([surveyId, code])
+  @@map("survey_indicators")
 }
