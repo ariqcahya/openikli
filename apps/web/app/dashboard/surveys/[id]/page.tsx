@@ -21,6 +21,11 @@ import {
   Download,
   Copy,
   Info,
+  BarChart3,
+  Calculator,
+  Layers,
+  MapPin,
+  Activity,
 } from 'lucide-react';
 
 interface Question {
@@ -63,8 +68,58 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
   const [error, setError] = useState<string | null>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'detail' | 'builder' | 'preview'>('builder');
+  const [activeTab, setActiveTab] = useState<'detail' | 'builder' | 'preview' | 'scoring'>('builder');
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Scoring State
+  const [scores, setScores] = useState<any[]>([]);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
+  const [scoresError, setScoresError] = useState<string | null>(null);
+
+  const fetchScores = async () => {
+    try {
+      setLoadingScores(true);
+      setScoresError(null);
+      const res = await fetch(`/api/surveys/${surveyId}/scores`);
+      if (!res.ok) {
+        throw new Error('Gagal mengambil data skor.');
+      }
+      const data = await res.json();
+      setScores(data);
+    } catch (err: any) {
+      setScoresError(err.message || 'Terjadi kesalahan saat memuat skor.');
+    } finally {
+      setLoadingScores(false);
+    }
+  };
+
+  const handleRecalculate = async () => {
+    try {
+      setRecalculating(true);
+      setScoresError(null);
+      const res = await fetch(`/api/surveys/${surveyId}/recalculate`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal menghitung ulang skor.');
+      }
+      await fetchScores();
+      alert('Kalkulasi ulang skor kuesioner berhasil diselesaikan!');
+    } catch (err: any) {
+      setScoresError(err.message || 'Gagal menghitung ulang skor.');
+      alert(err.message || 'Gagal menghitung ulang skor.');
+    } finally {
+      setRecalculating(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'scoring') {
+      fetchScores();
+    }
+  }, [activeTab]);
 
   // Detail Form State
   const [detailsForm, setDetailsForm] = useState({
@@ -436,6 +491,17 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
           >
             <Eye className="w-4 h-4 mr-2" />
             Pratinjau Form
+          </button>
+          <button
+            onClick={() => setActiveTab('scoring')}
+            className={`flex items-center px-3.5 py-1.5 text-xs font-medium rounded-md transition-all ${
+              activeTab === 'scoring'
+                ? 'bg-surface text-text-primary shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Hasil & Scoring
           </button>
           <button
             onClick={() => setActiveTab('detail')}
@@ -938,6 +1004,277 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab CONTENT: scoring */}
+      {activeTab === 'scoring' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: Overall score card */}
+            <div className="lg:col-span-1 bg-surface border border-border rounded-xl shadow-sm p-6 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-text-primary mb-1">Indeks IKLI Keseluruhan</h3>
+                <p className="text-xs text-text-secondary mb-6">Nilai rata-rata tertimbang terkonversi dari seluruh tanggapan.</p>
+                
+                {loadingScores ? (
+                  <div className="flex flex-col items-center justify-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                    <p className="text-xs text-text-secondary">Memuat skor...</p>
+                  </div>
+                ) : (
+                  (() => {
+                    const totalScoreRecord = scores.find(
+                      (s) => s.indicatorCode === 'ALL' && s.regionId === null && s.infrastructureTypeId === null
+                    );
+                    if (totalScoreRecord) {
+                      return (
+                        <div className="text-center py-6">
+                          <div className="text-6xl font-black text-primary tracking-tight">
+                            {totalScoreRecord.score100.toFixed(2)}
+                          </div>
+                          <div className="text-sm font-semibold text-text-secondary mt-1">
+                            Skala 0 - 100
+                          </div>
+                          <div className="mt-4 inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold bg-primary-soft text-primary">
+                            {totalScoreRecord.category}
+                          </div>
+                          <div className="text-xs text-text-muted mt-6">
+                            Berdasarkan {totalScoreRecord.responseCount} responden
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="text-center py-10 bg-slate-50 border border-dashed border-border rounded-xl">
+                        <Activity className="w-8 h-8 text-text-muted mx-auto mb-2" />
+                        <p className="text-xs text-text-secondary">Belum ada kalkulasi skor</p>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+
+              {(() => {
+                const totalScoreRecord = scores.find(
+                  (s) => s.indicatorCode === 'ALL' && s.regionId === null && s.infrastructureTypeId === null
+                );
+                if (totalScoreRecord) {
+                  return (
+                    <div className="text-[10px] text-text-muted border-t border-border pt-4 mt-4 self-stretch flex justify-between">
+                      <span>Waktu Perhitungan:</span>
+                      <span>{new Date(totalScoreRecord.calculatedAt).toLocaleString('id-ID')}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
+            {/* Right: Controls & Formulas */}
+            <div className="lg:col-span-2 bg-surface border border-border rounded-xl shadow-sm p-6 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-text-primary">Mesin Kalkulasi & Parameter</h3>
+                <p className="text-xs text-text-secondary">Picu kalkulasi ulang berdasarkan entri data jawaban terbaru di database.</p>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-border rounded-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <h4 className="text-sm font-bold text-text-primary">Kalkulasi Ulang (Recalculate)</h4>
+                    <p className="text-xs text-text-secondary">
+                      Proses ini akan menghapus cache lama dan menghitung ulang seluruh indikator, infrastruktur, wilayah, dan indeks total.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRecalculate}
+                    disabled={recalculating || loadingScores}
+                    className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center disabled:opacity-50 flex-shrink-0"
+                  >
+                    {recalculating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Menghitung...
+                      </>
+                    ) : (
+                      <>
+                        <Calculator className="w-4 h-4 mr-2" />
+                        Mulai Kalkulasi
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-text-secondary">
+                <div className="border border-border p-4 rounded-xl space-y-2">
+                  <span className="font-bold text-text-primary block">1. Konversi Skala 100</span>
+                  <p>Rating pilihan responden ($R$) dikonversi ke skala 100 dengan batas skala maksimum ($S$):</p>
+                  <code className="block bg-slate-50 p-2 rounded border text-text-primary font-mono text-[10px] text-center">
+                    Skor = ((R - 1) / (S - 1)) * 100
+                  </code>
+                </div>
+
+                <div className="border border-border p-4 rounded-xl space-y-2">
+                  <span className="font-bold text-text-primary block">2. Rata-rata Tertimbang</span>
+                  <p>Agregasi skor menggunakan bobot pertanyaan ($W_i$) dan rating kuesioner ($R_i$):</p>
+                  <code className="block bg-slate-50 p-2 rounded border text-text-primary font-mono text-[10px] text-center">
+                    Weighted Avg = Sum(R_i * W_i) / Sum(W_i)
+                  </code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Breakdown sections */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Indicators table */}
+            <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-base font-bold text-text-primary">Breakdown Skor per Indikator</h3>
+                <p className="text-xs text-text-secondary">Rincian nilai indeks per indikator pertanyaan kuesioner.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-border">
+                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kode Indikator</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai Raw</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai Skala 100</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kategori</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Responden</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-sm text-text-primary">
+                    {(() => {
+                      const indicatorScores = scores.filter(
+                        (s) => s.indicatorCode !== 'ALL' && s.regionId === null && s.infrastructureTypeId === null
+                      );
+                      if (indicatorScores.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-10 text-center text-text-muted">
+                              Belum ada data skor indikator. Klik Kalkulasi untuk memproses data.
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return indicatorScores.map((s) => (
+                        <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-3.5 font-semibold font-mono text-xs">{s.indicatorCode}</td>
+                          <td className="px-6 py-3.5">{s.scoreRaw.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 font-bold text-primary">{s.score100.toFixed(2)}</td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 border text-slate-700">
+                              {s.category}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3.5 text-text-secondary">{s.responseCount}</td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Two column grid: Infra and Region */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Infrastructure */}
+              <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                  <h3 className="text-base font-bold text-text-primary">Breakdown Skor per Infrastruktur</h3>
+                  <p className="text-xs text-text-secondary">Rincian nilai berdasarkan kategori infrastruktur yang bersangkutan.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-border">
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Infrastruktur</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai 100</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kategori</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Responden</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-sm text-text-primary">
+                      {(() => {
+                        const infraScores = scores.filter(
+                          (s) => s.indicatorCode === 'ALL' && s.regionId === null && s.infrastructureTypeId !== null
+                        );
+                        if (infraScores.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-10 text-center text-text-muted">
+                                Belum ada data infrastruktur.
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return infraScores.map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-3.5 font-bold flex items-center">
+                              <Layers className="w-4 h-4 mr-2 text-text-muted" />
+                              {s.infrastructureType?.name || 'Lainnya'}
+                            </td>
+                            <td className="px-6 py-3.5 font-bold text-primary">{s.score100.toFixed(2)}</td>
+                            <td className="px-6 py-3.5">{s.category}</td>
+                            <td className="px-6 py-3.5 text-text-secondary">{s.responseCount}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Regions */}
+              <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                  <h3 className="text-base font-bold text-text-primary">Breakdown Skor per Wilayah</h3>
+                  <p className="text-xs text-text-secondary">Rincian sebaran nilai IKLI berdasarkan wilayah administrasi.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-border">
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Wilayah</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai 100</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kategori</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Responden</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-sm text-text-primary">
+                      {(() => {
+                        const regionScores = scores.filter(
+                          (s) => s.indicatorCode === 'ALL' && s.regionId !== null && s.infrastructureTypeId === null
+                        );
+                        if (regionScores.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-10 text-center text-text-muted">
+                                Belum ada data wilayah.
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return regionScores.map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-3.5 font-bold flex items-center">
+                              <MapPin className="w-4 h-4 mr-2 text-text-muted" />
+                              {s.region?.name || 'Tidak Diketahui'}
+                            </td>
+                            <td className="px-6 py-3.5 font-bold text-primary">{s.score100.toFixed(2)}</td>
+                            <td className="px-6 py-3.5">{s.category}</td>
+                            <td className="px-6 py-3.5 text-text-secondary">{s.responseCount}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

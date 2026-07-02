@@ -246,6 +246,10 @@ model IkliScore {
   region               Region?             @relation(fields: [regionId], references: [id], onDelete: SetNull)
   infrastructureType   InfrastructureType? @relation(fields: [infrastructureTypeId], references: [id], onDelete: SetNull)
 
+  @@index([surveyId])
+  @@index([regionId])
+  @@index([infrastructureTypeId])
+  @@index([indicatorCode])
   @@map("ikli_scores")
 }
 
