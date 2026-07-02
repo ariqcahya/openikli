@@ -38,6 +38,7 @@ interface Survey {
   organization?: {
     name: string;
   };
+  indicators?: any[];
 }
 
 interface Region {
@@ -462,19 +463,46 @@ export default function PublicSurveyFormPage() {
                   grouped[key].items.push(q);
                 });
 
+                const indicatorMap = new Map((survey?.indicators || []).map((ind: any) => [ind.code, ind]));
                 let globalIdx = 0;
 
                 return Object.keys(grouped).map((groupName) => {
                   const group = grouped[groupName];
+                  const indInfo = indicatorMap.get(group.indicatorCode);
+                  const dimensi = indInfo?.dimensi;
+                  const unsur = indInfo?.unsur;
+                  const aspek = indInfo?.aspek;
+
                   return (
                     <div key={groupName} className="space-y-4">
-                      <div className="bg-primary/5 border border-primary/10 rounded-xl px-4 py-2.5 flex items-center justify-between">
-                        <h4 className="text-xs font-extrabold text-primary uppercase tracking-wider">
-                          Indikator: {groupName}
-                        </h4>
-                        <span className="text-[10px] font-semibold font-mono bg-primary-soft text-primary-text px-2 py-0.5 rounded uppercase">
-                          Kode: {group.indicatorCode}
-                        </span>
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 space-y-2.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                            Indikator: {groupName}
+                          </h4>
+                          <span className="self-start sm:self-center text-[10px] font-bold font-mono bg-slate-200 text-slate-700 px-2 py-0.5 rounded uppercase">
+                            Kode: {group.indicatorCode}
+                          </span>
+                        </div>
+                        {(dimensi || unsur || aspek) && (
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200/50">
+                            {dimensi && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                Dimensi: {dimensi}
+                              </span>
+                            )}
+                            {unsur && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                                Unsur: {unsur}
+                              </span>
+                            )}
+                            {aspek && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                Aspek: {aspek}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-4">

@@ -20,6 +20,9 @@ export async function GET(
         questions: {
           orderBy: { sortOrder: 'asc' },
         },
+        indicators: {
+          orderBy: { code: 'asc' },
+        },
         organization: {
           select: { name: true },
         },
