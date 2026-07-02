@@ -27,6 +27,7 @@ import {
   MapPin,
   Activity,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 interface Question {
@@ -217,6 +218,83 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
   const [indicatorError, setIndicatorError] = useState<string | null>(null);
   const [savingIndicator, setSavingIndicator] = useState(false);
 
+  // Master IKLI Hierarchy State (Dimensi, Unsur, Aspek)
+  const [masterIkli, setMasterIkli] = useState<any[]>([]);
+  const [masterLoading, setMasterLoading] = useState(false);
+  const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
+  const [newMasterForm, setNewMasterForm] = useState({ type: 'DIMENSI', name: '', dimensiId: '', unsurId: '' });
+  const [masterError, setMasterError] = useState<string | null>(null);
+  const [savingMaster, setSavingMaster] = useState(false);
+
+  const fetchMasterIkli = async () => {
+    try {
+      setMasterLoading(true);
+      const res = await fetch('/api/master-ikli');
+      if (res.ok) {
+        const data = await res.json();
+        setMasterIkli(data);
+      }
+    } catch (err) {
+      console.error('Gagal memuat master data IKLI:', err);
+    } finally {
+      setMasterLoading(false);
+    }
+  };
+
+  const handleSaveMasterItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMasterForm.name.trim()) {
+      setMasterError('Nama master data tidak boleh kosong');
+      return;
+    }
+
+    try {
+      setSavingMaster(true);
+      setMasterError(null);
+      const res = await fetch('/api/master-ikli', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMasterForm)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal menyimpan master data.');
+      }
+
+      setNewMasterForm({ ...newMasterForm, name: '' });
+      await fetchMasterIkli();
+    } catch (err: any) {
+      setMasterError(err.message || 'Gagal menyimpan master data.');
+    } finally {
+      setSavingMaster(false);
+    }
+  };
+
+  const handleDeleteMasterItem = async (id: string, type: 'DIMENSI' | 'UNSUR' | 'ASPEK') => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus ${type.toLowerCase()} ini? Semua data di bawahnya juga akan ikut terhapus.`)) {
+      return;
+    }
+
+    try {
+      setMasterLoading(true);
+      const res = await fetch(`/api/master-ikli/${id}?type=${type}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal menghapus master data.');
+      }
+
+      await fetchMasterIkli();
+    } catch (err: any) {
+      alert(err.message || 'Gagal menghapus master data.');
+    } finally {
+      setMasterLoading(false);
+    }
+  };
+
   const fetchIndicators = async () => {
     try {
       setLoadingIndicators(true);
@@ -364,8 +442,8 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
         endDate: data.endDate ? data.endDate.split('T')[0] : '',
       });
 
-      // Hydrate indicators list
-      await fetchIndicators();
+      // Hydrate indicators list and master data
+      await Promise.all([fetchIndicators(), fetchMasterIkli()]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -1791,9 +1869,28 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="relative w-full max-w-4xl bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <div className="flex items-center space-x-2">
-                <Layers className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-text-primary text-lg">Kelola Indikator Survei</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Layers className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-text-primary text-lg">Kelola Indikator Survei</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMasterForm({
+                      type: 'DIMENSI',
+                      name: '',
+                      dimensiId: masterIkli[0]?.id || '',
+                      unsurId: masterIkli[0]?.unsurs?.[0]?.id || ''
+                    });
+                    setMasterError(null);
+                    setIsMasterModalOpen(true);
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 border border-border bg-slate-50 hover:bg-slate-100 text-text-secondary hover:text-text-primary text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                  Kelola Master Data IKLI
+                </button>
               </div>
               <button
                 onClick={() => setIsIndicatorModalOpen(false)}
@@ -1915,59 +2012,78 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                      Dimensi *
-                    </label>
-                    <select
-                      required
-                      value={indicatorForm.dimensi}
-                      onChange={(e) => setIndicatorForm({ ...indicatorForm, dimensi: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    >
-                      <option value="">-- Pilih Dimensi --</option>
-                      <option value="Jalan dan Jembatan">Jalan dan Jembatan</option>
-                      <option value="Air Bersih">Air Bersih</option>
-                      <option value="Permukiman">Permukiman</option>
-                      <option value="Ruang Publik">Ruang Publik</option>
-                      <option value="Pelayanan Publik">Pelayanan Publik</option>
-                      <option value="Irigasi">Irigasi</option>
-                      <option value="Perhubungan">Perhubungan</option>
-                    </select>
-                  </div>
+                  {(() => {
+                    const selectedDim = masterIkli.find((d: any) => d.name === indicatorForm.dimensi);
+                    const unsurs = selectedDim?.unsurs || [];
+                    const selectedUns = unsurs.find((u: any) => u.name === indicatorForm.unsur);
+                    const aspeks = selectedUns?.aspeks || [];
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                      Unsur / Kategori *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Contoh: Jalan Kabupaten, Jembatan"
-                      value={indicatorForm.unsur}
-                      onChange={(e) => setIndicatorForm({ ...indicatorForm, unsur: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    />
-                  </div>
+                    return (
+                      <>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                            Dimensi *
+                          </label>
+                          <select
+                            required
+                            value={indicatorForm.dimensi}
+                            onChange={(e) => setIndicatorForm({
+                              ...indicatorForm,
+                              dimensi: e.target.value,
+                              unsur: '',
+                              aspek: ''
+                            })}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                          >
+                            <option value="">-- Pilih Dimensi --</option>
+                            {masterIkli.map((d: any) => (
+                              <option key={d.id} value={d.name}>{d.name}</option>
+                            ))}
+                          </select>
+                        </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                      Aspek Penilaian *
-                    </label>
-                    <select
-                      required
-                      value={indicatorForm.aspek}
-                      onChange={(e) => setIndicatorForm({ ...indicatorForm, aspek: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    >
-                      <option value="">-- Pilih Aspek --</option>
-                      <option value="Ketersediaan (Availability)">Ketersediaan (Availability)</option>
-                      <option value="Kualitas Fisik (Quality)">Kualitas Fisik (Quality)</option>
-                      <option value="Kesesuaian (Appropriateness)">Kesesuaian (Appropriateness)</option>
-                      <option value="Pemanfaatan (Utility)">Pemanfaatan (Utility)</option>
-                      <option value="Kontribusi terhadap ekonomi">Kontribusi terhadap ekonomi</option>
-                    </select>
-                  </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                            Unsur / Kategori *
+                          </label>
+                          <select
+                            required
+                            disabled={!indicatorForm.dimensi}
+                            value={indicatorForm.unsur}
+                            onChange={(e) => setIndicatorForm({
+                              ...indicatorForm,
+                              unsur: e.target.value,
+                              aspek: ''
+                            })}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm disabled:opacity-50"
+                          >
+                            <option value="">-- Pilih Unsur --</option>
+                            {unsurs.map((u: any) => (
+                              <option key={u.id} value={u.name}>{u.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                            Aspek Penilaian *
+                          </label>
+                          <select
+                            required
+                            disabled={!indicatorForm.unsur}
+                            value={indicatorForm.aspek}
+                            onChange={(e) => setIndicatorForm({ ...indicatorForm, aspek: e.target.value })}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm disabled:opacity-50"
+                          >
+                            <option value="">-- Pilih Aspek --</option>
+                            {aspeks.map((a: any) => (
+                              <option key={a.id} value={a.name}>{a.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
@@ -2005,6 +2121,216 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                       </>
                     ) : (
                       indicatorForm.id ? 'Perbarui Indikator' : 'Tambah Indikator'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Master Data Modal */}
+      {isMasterModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-3xl bg-surface rounded-xl shadow-xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-text-primary text-lg">Kelola Master Data IKLI</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMasterModalOpen(false);
+                  setMasterError(null);
+                }}
+                className="text-text-muted hover:text-text-secondary p-1 rounded-md hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-border h-[450px]">
+              {/* Left Side: Master Tree View (3 cols) */}
+              <div className="col-span-3 p-6 overflow-y-auto flex flex-col h-full bg-slate-50/20">
+                <h4 className="font-bold text-text-primary text-sm mb-3">Hierarki Dimensi &gt; Unsur &gt; Aspek</h4>
+                
+                {masterLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 flex-grow">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                    <span className="text-xs text-text-secondary">Memuat master data...</span>
+                  </div>
+                ) : masterIkli.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 flex-grow text-center text-text-muted">
+                    <p className="text-sm font-semibold">Belum Ada Master Data</p>
+                    <p className="text-xs max-w-xs mt-1">Gunakan form di sebelah kanan untuk menambahkan Dimensi pertama.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 flex-grow overflow-y-auto pr-1">
+                    {masterIkli.map((dim: any) => (
+                      <div key={dim.id} className="border border-border rounded-xl p-3 bg-white space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Dimensi: {dim.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMasterItem(dim.id, 'DIMENSI')}
+                            className="text-text-muted hover:text-danger p-1 rounded hover:bg-slate-100 transition-all"
+                            title="Hapus Dimensi"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Unsurs */}
+                        <div className="pl-3 border-l-2 border-slate-100 space-y-2">
+                          {(dim.unsurs || []).map((uns: any) => (
+                            <div key={uns.id} className="space-y-1.5">
+                              <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1 rounded-lg">
+                                <span className="text-xs font-semibold text-slate-700">
+                                  Unsur: {uns.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMasterItem(uns.id, 'UNSUR')}
+                                  className="text-text-muted hover:text-danger p-0.5 rounded hover:bg-slate-200 transition-all"
+                                  title="Hapus Unsur"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              {/* Aspeks */}
+                              <div className="pl-4 space-y-1">
+                                {(uns.aspeks || []).map((asp: any) => (
+                                  <div key={asp.id} className="flex items-center justify-between text-[11px] text-text-secondary bg-slate-50/50 px-2 py-0.5 rounded">
+                                    <span>Aspek: {asp.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteMasterItem(asp.id, 'ASPEK')}
+                                      className="text-text-muted hover:text-danger p-0.5 rounded hover:bg-slate-200 transition-all"
+                                      title="Hapus Aspek"
+                                    >
+                                      <Trash2 className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side: Add Form (2 cols) */}
+              <form onSubmit={handleSaveMasterItem} className="col-span-2 p-6 flex flex-col justify-between h-full bg-slate-50/50 overflow-y-auto">
+                <div className="space-y-4">
+                  <h4 className="font-bold text-text-primary text-sm">Tambah Master Data</h4>
+
+                  {masterError && (
+                    <div className="p-3 bg-danger-soft border border-danger/10 text-danger-text text-xs rounded-lg flex items-start">
+                      <AlertTriangle className="w-3.5 h-3.5 mr-2 mt-0.5 shrink-0" />
+                      <span>{masterError}</span>
+                    </div>
+                  )}
+
+                  {/* Type Select */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Tipe Master Data
+                    </label>
+                    <select
+                      value={newMasterForm.type}
+                      onChange={(e) => {
+                        setNewMasterForm({
+                          type: e.target.value,
+                          name: '',
+                          dimensiId: masterIkli[0]?.id || '',
+                          unsurId: masterIkli[0]?.unsurs?.[0]?.id || ''
+                        });
+                        setMasterError(null);
+                      }}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    >
+                      <option value="DIMENSI">Dimensi</option>
+                      <option value="UNSUR">Unsur</option>
+                      <option value="ASPEK">Aspek</option>
+                    </select>
+                  </div>
+
+                  {/* Conditional Parent Selection */}
+                  {newMasterForm.type === 'UNSUR' && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                        Pilih Dimensi Induk
+                      </label>
+                      <select
+                        required
+                        value={newMasterForm.dimensiId}
+                        onChange={(e) => setNewMasterForm({ ...newMasterForm, dimensiId: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                      >
+                        <option value="">-- Pilih Dimensi --</option>
+                        {masterIkli.map((d: any) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {newMasterForm.type === 'ASPEK' && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                        Pilih Unsur Induk
+                      </label>
+                      <select
+                        required
+                        value={newMasterForm.unsurId}
+                        onChange={(e) => setNewMasterForm({ ...newMasterForm, unsurId: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                      >
+                        <option value="">-- Pilih Unsur --</option>
+                        {masterIkli.flatMap((d: any) => d.unsurs || []).map((u: any) => (
+                          <option key={u.id} value={u.id}>{u.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Item Name Input */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Nama Item *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Masukkan nama..."
+                      value={newMasterForm.name}
+                      onChange={(e) => setNewMasterForm({ ...newMasterForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-border flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingMaster}
+                    className="w-full px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center justify-center space-x-1"
+                  >
+                    {savingMaster ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <span>Simpan</span>
                     )}
                   </button>
                 </div>

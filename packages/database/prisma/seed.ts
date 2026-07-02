@@ -202,6 +202,99 @@ async function main() {
   }
   console.log('Seeded sample regions successfully.');
 
+  // 6. Seed Default Master Data IKLI (Dimensi, Unsur, Aspek)
+  console.log('Seeding Master Data IKLI...');
+  const masterData = [
+    {
+      dimensi: 'Jalan dan Jembatan',
+      unsurs: [
+        {
+          name: 'Jalan Kabupaten',
+          aspeks: ['Ketersediaan (Availability)', 'Kualitas Fisik (Quality)', 'Kesesuaian (Appropriateness)'],
+        },
+        {
+          name: 'Jembatan',
+          aspeks: ['Ketersediaan (Availability)', 'Kualitas Fisik (Quality)', 'Kesesuaian (Appropriateness)'],
+        },
+      ],
+    },
+    {
+      dimensi: 'Drainase dan Sanitasi',
+      unsurs: [
+        {
+          name: 'Drainase',
+          aspeks: ['Ketersediaan (Availability)', 'Kualitas Fisik (Quality)'],
+        },
+        {
+          name: 'Sanitasi',
+          aspeks: ['Ketersediaan (Availability)', 'Kualitas Fisik (Quality)'],
+        },
+      ],
+    },
+    {
+      dimensi: 'Air Bersih',
+      unsurs: [
+        {
+          name: 'Air Bersih',
+          aspeks: ['Ketersediaan (Availability)', 'Kualitas Fisik (Quality)', 'Kesesuaian (Appropriateness)'],
+        },
+      ],
+    },
+  ];
+
+  for (const item of masterData) {
+    const dim = await prisma.masterDimensi.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: org.id,
+          name: item.dimensi,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: org.id,
+        name: item.dimensi,
+      },
+    });
+
+    for (const uns of item.unsurs) {
+      const unsur = await prisma.masterUnsur.upsert({
+        where: {
+          organizationId_dimensiId_name: {
+            organizationId: org.id,
+            dimensiId: dim.id,
+            name: uns.name,
+          },
+        },
+        update: {},
+        create: {
+          organizationId: org.id,
+          dimensiId: dim.id,
+          name: uns.name,
+        },
+      });
+
+      for (const asp of uns.aspeks) {
+        await prisma.masterAspek.upsert({
+          where: {
+            organizationId_unsurId_name: {
+              organizationId: org.id,
+              unsurId: unsur.id,
+              name: asp,
+            },
+          },
+          update: {},
+          create: {
+            organizationId: org.id,
+            unsurId: unsur.id,
+            name: asp,
+          },
+        });
+      }
+    }
+  }
+  console.log('Seeded Master Data IKLI successfully.');
+
   console.log('Seeding completed successfully!');
 }
 

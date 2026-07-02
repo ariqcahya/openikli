@@ -89,6 +89,9 @@ model Organization {
   surveys             Survey[]
   llmSettings         OrganizationLlmSetting?
   auditLogs           AuditLog[]
+  masterDimensis      MasterDimensi[]
+  masterUnsurs        MasterUnsur[]
+  masterAspeks        MasterAspek[]
 
   @@map("organizations")
 }
@@ -354,4 +357,46 @@ model SurveyIndicator {
 
   @@unique([surveyId, code])
   @@map("survey_indicators")
+}
+
+model MasterDimensi {
+  id             String          @id @default(uuid())
+  name           String
+  organizationId String          @map("organization_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  unsurs         MasterUnsur[]
+
+  @@unique([organizationId, name])
+  @@map("master_dimensi")
+}
+
+model MasterUnsur {
+  id             String          @id @default(uuid())
+  name           String
+  dimensiId      String          @map("dimensi_id")
+  organizationId String          @map("organization_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  dimensi        MasterDimensi   @relation(fields: [dimensiId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  aspeks         MasterAspek[]
+
+  @@unique([organizationId, dimensiId, name])
+  @@map("master_unsur")
+}
+
+model MasterAspek {
+  id             String          @id @default(uuid())
+  name           String
+  unsurId        String          @map("unsur_id")
+  organizationId String          @map("organization_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  unsur          MasterUnsur     @relation(fields: [unsurId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, unsurId, name])
+  @@map("master_aspek")
 }
