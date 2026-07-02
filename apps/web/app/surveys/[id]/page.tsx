@@ -74,7 +74,7 @@ export default function PublicSurveyFormPage() {
   const [notes, setNotes] = useState('');
   
   // Question Answers State
-  const [answers, setAnswers] = useState<Record<string, { ratingValue?: number; textValue?: string }>>({});
+  const [answers, setAnswers] = useState<Record<string, { ratingValue?: number; expectationValue?: number; textValue?: string }>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -137,15 +137,24 @@ export default function PublicSurveyFormPage() {
   };
 
   // Change Answer Handler
-  const handleAnswerChange = (questionId: string, type: string, value: any) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: {
-        ...prev[questionId],
-        ratingValue: type === 'RATING' ? Number(value) : prev[questionId]?.ratingValue,
-        textValue: type !== 'RATING' ? String(value) : prev[questionId]?.textValue,
-      },
-    }));
+  const handleAnswerChange = (questionId: string, type: string, value: any, ratingType?: 'SATISFACTION' | 'EXPECTATION') => {
+    setAnswers((prev) => {
+      const existing = prev[questionId] || {};
+      let updated = { ...existing };
+      if (type === 'RATING') {
+        if (ratingType === 'SATISFACTION') {
+          updated.ratingValue = Number(value);
+        } else {
+          updated.expectationValue = Number(value);
+        }
+      } else {
+        updated.textValue = String(value);
+      }
+      return {
+        ...prev,
+        [questionId]: updated,
+      };
+    });
   };
 
   // Form Submit Handler
@@ -174,13 +183,16 @@ export default function PublicSurveyFormPage() {
     for (const q of questions) {
       if (q.isRequired) {
         const ans = answers[q.id];
-        if (q.questionType === 'RATING' && (!ans || ans.ratingValue === undefined)) {
-          alert(`Pertanyaan "${q.questionText}" wajib diisi.`);
-          return;
-        }
-        if (q.questionType !== 'RATING' && (!ans || !ans.textValue)) {
-          alert(`Pertanyaan "${q.questionText}" wajib diisi.`);
-          return;
+        if (q.questionType === 'RATING') {
+          if (!ans || ans.ratingValue === undefined || ans.expectationValue === undefined) {
+            alert(`Pertanyaan "${q.questionText}" (Harapan & Kepuasan) wajib diisi.`);
+            return;
+          }
+        } else {
+          if (!ans || !ans.textValue) {
+            alert(`Pertanyaan "${q.questionText}" wajib diisi.`);
+            return;
+          }
         }
       }
     }
@@ -190,6 +202,7 @@ export default function PublicSurveyFormPage() {
       const answersArray = Object.keys(answers).map((key) => ({
         questionId: key,
         ratingValue: answers[key].ratingValue,
+        expectationValue: answers[key].expectationValue,
         textValue: answers[key].textValue,
       }));
 
@@ -491,25 +504,60 @@ export default function PublicSurveyFormPage() {
                               {/* Rendering inputs depending on type */}
                               <div>
                                 {q.questionType === 'RATING' && (
-                                  <div className="flex items-center space-x-2 mt-2">
-                                    {Array.from({ length: survey.scoringScale }).map((_, scaleIdx) => {
-                                      const val = scaleIdx + 1;
-                                      const isSelected = answers[q.id]?.ratingValue === val;
-                                      return (
-                                        <button
-                                          key={scaleIdx}
-                                          type="button"
-                                          onClick={() => handleAnswerChange(q.id, 'RATING', val)}
-                                          className={`w-10 h-10 rounded-full border text-sm font-bold flex items-center justify-center transition-all ${
-                                            isSelected
-                                              ? 'bg-primary border-primary text-white scale-110 shadow-sm'
-                                              : 'border-border bg-background hover:bg-surface text-text-secondary'
-                                          }`}
-                                        >
-                                          {val}
-                                        </button>
-                                      );
-                                    })}
+                                  <div className="space-y-4">
+                                    {/* Harapan Rating Row */}
+                                    <div className="space-y-1">
+                                      <span className="block text-xs font-semibold text-text-secondary uppercase">
+                                        Tingkat Kepentingan / Harapan (H) <span className="text-destructive">*</span>
+                                      </span>
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        {Array.from({ length: survey.scoringScale || 5 }).map((_, scaleIdx) => {
+                                          const val = scaleIdx + 1;
+                                          const isSelected = answers[q.id]?.expectationValue === val;
+                                          return (
+                                            <button
+                                              key={scaleIdx}
+                                              type="button"
+                                              onClick={() => handleAnswerChange(q.id, 'RATING', val, 'EXPECTATION')}
+                                              className={`w-10 h-10 rounded-full border text-sm font-bold flex items-center justify-center transition-all ${
+                                                isSelected
+                                                  ? 'bg-amber-500 border-amber-500 text-white scale-110 shadow-sm font-black'
+                                                  : 'border-border bg-background hover:bg-surface text-text-secondary'
+                                              }`}
+                                            >
+                                              {val}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    {/* Kepuasan Rating Row */}
+                                    <div className="space-y-1">
+                                      <span className="block text-xs font-semibold text-text-secondary uppercase">
+                                        Tingkat Kenyataan / Kepuasan (K) <span className="text-destructive">*</span>
+                                      </span>
+                                      <div className="flex items-center space-x-2 mt-1">
+                                        {Array.from({ length: survey.scoringScale || 5 }).map((_, scaleIdx) => {
+                                          const val = scaleIdx + 1;
+                                          const isSelected = answers[q.id]?.ratingValue === val;
+                                          return (
+                                            <button
+                                              key={scaleIdx}
+                                              type="button"
+                                              onClick={() => handleAnswerChange(q.id, 'RATING', val, 'SATISFACTION')}
+                                              className={`w-10 h-10 rounded-full border text-sm font-bold flex items-center justify-center transition-all ${
+                                                isSelected
+                                                  ? 'bg-primary border-primary text-white scale-110 shadow-sm font-black'
+                                                  : 'border-border bg-background hover:bg-surface text-text-secondary'
+                                              }`}
+                                            >
+                                              {val}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
 

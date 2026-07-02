@@ -63,8 +63,9 @@ export async function POST(
           data: answers.map((ans) => ({
             responseId: newResponse.id,
             questionId: ans.questionId,
-            ratingValue: ans.ratingValue !== undefined ? parseInt(ans.ratingValue, 10) : null,
-            textValue: ans.textValue !== undefined ? String(ans.textValue) : null,
+            ratingValue: ans.ratingValue !== undefined && ans.ratingValue !== null ? parseInt(ans.ratingValue, 10) : null,
+            expectationValue: ans.expectationValue !== undefined && ans.expectationValue !== null ? parseInt(ans.expectationValue, 10) : null,
+            textValue: ans.textValue !== undefined && ans.textValue !== null ? String(ans.textValue) : null,
           })),
         });
       }

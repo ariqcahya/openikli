@@ -69,7 +69,7 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { code, name, description } = body;
+    const { code, name, description, dimensi, unsur, aspek } = body;
 
     if (!code || !name) {
       return NextResponse.json({ error: 'Kode dan Nama Indikator wajib diisi' }, { status: 400 });
@@ -99,6 +99,9 @@ export async function POST(
         code: code.toUpperCase(),
         name,
         description: description || null,
+        dimensi: dimensi || null,
+        unsur: unsur || null,
+        aspek: aspek || null,
       },
     });
 

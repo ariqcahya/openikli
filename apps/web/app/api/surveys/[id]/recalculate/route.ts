@@ -78,6 +78,7 @@ export async function POST(
       regionId: string | null;
       questionId: string;
       ratingValue: number;
+      expectationValue: number;
       weight: number;
       indicatorCode: string;
       infrastructureTypeId: string | null;
@@ -105,11 +106,15 @@ export async function POST(
         }
         uniqueIndicators.add(q.indicatorCode);
 
+        // Fallback for expectation value if null: default to 5 (sangat penting)
+        const expValue = ans.expectationValue !== null && ans.expectationValue !== undefined ? ans.expectationValue : 5;
+
         ratingAnswers.push({
           responseId: resp.id,
           regionId: resp.regionId,
           questionId: ans.questionId,
           ratingValue: ans.ratingValue,
+          expectationValue: expValue,
           weight,
           indicatorCode: q.indicatorCode,
           infrastructureTypeId: infra ? infra.id : null,
@@ -121,13 +126,65 @@ export async function POST(
     const calculateMetrics = (subset: RatingAnswerItem[]) => {
       if (subset.length === 0) return null;
       const uniqueResponses = new Set(subset.map((x) => x.responseId));
-      const weightedAvgResult = calculateWeightedAverage(subset);
-      const score100 = convertScoreTo100(weightedAvgResult.scoreRaw, survey.scoringScale);
-      const category = getScoreCategory(score100);
+
+      // Calculate Kepuasan average (weighted)
+      let totalWeightK = 0;
+      let weightedSumK = 0;
+      // Calculate Harapan average (weighted)
+      let totalWeightH = 0;
+      let weightedSumH = 0;
+
+      for (const item of subset) {
+        // Kepuasan
+        weightedSumK += item.ratingValue * item.weight;
+        totalWeightK += item.weight;
+
+        // Harapan
+        weightedSumH += item.expectationValue * item.weight;
+        totalWeightH += item.weight;
+      }
+
+      const kepuasanRaw = totalWeightK > 0 ? weightedSumK / totalWeightK : 0;
+      const harapanRaw = totalWeightH > 0 ? weightedSumH / totalWeightH : 0;
+
+      const ihli = harapanRaw * 20;
+      const ikli = kepuasanRaw * 20;
+      const gap = kepuasanRaw - harapanRaw;
+      const skorKepuasan = kepuasanRaw / 5;
+      const skorHarapan = harapanRaw / 5;
+      const acv = harapanRaw * kepuasanRaw;
+      const udcv = harapanRaw * 5;
+      const pcgv = udcv - acv;
+
+      // Determine category (Skor Mutu) using Lookup table
+      // lookup table:
+      // < 36.1: "E - Kurang"
+      // < 52.1: "D - Kurang"
+      // < 68.1: "C - Cukup"
+      // < 84.1: "B - Baik"
+      // >= 84.1: "A - Sangat Baik"
+      let category = "E - Kurang";
+      if (ikli >= 84.1) {
+        category = "A - Sangat Baik";
+      } else if (ikli >= 68.1) {
+        category = "B - Baik";
+      } else if (ikli >= 52.1) {
+        category = "C - Cukup";
+      } else if (ikli >= 36.1) {
+        category = "D - Kurang";
+      }
 
       return {
-        scoreRaw: weightedAvgResult.scoreRaw,
-        score100,
+        scoreRaw: kepuasanRaw,
+        score100: ikli,
+        harapanRaw,
+        ihli,
+        gap,
+        skorKepuasan,
+        skorHarapan,
+        acv,
+        udcv,
+        pcgv,
         category,
         responseCount: uniqueResponses.size,
       };

@@ -122,11 +122,98 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
     }
   }, [activeTab]);
 
+  const getDimensiSummary = () => {
+    const indicatorScores = scores.filter(
+      (s) => s.indicatorCode !== 'ALL' && s.regionId === null && s.infrastructureTypeId === null
+    );
+
+    const indicatorMap = new Map(indicators.map((ind) => [ind.code, ind]));
+    const dimensiMap: Record<string, {
+      dimensi: string;
+      harapanSum: number;
+      kepuasanSum: number;
+      ihliSum: number;
+      ikliSum: number;
+      gapSum: number;
+      acvSum: number;
+      udcvSum: number;
+      pcgvSum: number;
+      count: number;
+    }> = {};
+
+    for (const s of indicatorScores) {
+      const indInfo = indicatorMap.get(s.indicatorCode);
+      const dimensi = indInfo?.dimensi || 'Lainnya';
+
+      if (!dimensiMap[dimensi]) {
+        dimensiMap[dimensi] = {
+          dimensi,
+          harapanSum: 0,
+          kepuasanSum: 0,
+          ihliSum: 0,
+          ikliSum: 0,
+          gapSum: 0,
+          acvSum: 0,
+          udcvSum: 0,
+          pcgvSum: 0,
+          count: 0,
+        };
+      }
+
+      const item = dimensiMap[dimensi];
+      item.harapanSum += s.harapanRaw ?? 0;
+      item.kepuasanSum += s.scoreRaw ?? 0;
+      item.ihliSum += s.ihli ?? 0;
+      item.ikliSum += s.score100 ?? 0;
+      item.gapSum += s.gap ?? 0;
+      item.acvSum += s.acv ?? 0;
+      item.udcvSum += s.udcv ?? 0;
+      item.pcgvSum += s.pcgv ?? 0;
+      item.count += 1;
+    }
+
+    return Object.values(dimensiMap).map((d) => {
+      const avgHarapan = d.harapanSum / d.count;
+      const avgKepuasan = d.kepuasanSum / d.count;
+      const avgIHLI = d.ihliSum / d.count;
+      const avgIKLI = d.ikliSum / d.count;
+      const avgGap = d.gapSum / d.count;
+      const avgACV = d.acvSum / d.count;
+      const avgUDCV = d.udcvSum / d.count;
+      const avgPCGV = d.pcgvSum / d.count;
+
+      // Mutu
+      let category = "E - Kurang";
+      if (avgIKLI >= 84.1) {
+        category = "A - Sangat Baik";
+      } else if (avgIKLI >= 68.1) {
+        category = "B - Baik";
+      } else if (avgIKLI >= 52.1) {
+        category = "C - Cukup";
+      } else if (avgIKLI >= 36.1) {
+        category = "D - Kurang";
+      }
+
+      return {
+        dimensi: d.dimensi,
+        avgHarapan,
+        avgKepuasan,
+        avgIHLI,
+        avgIKLI,
+        avgGap,
+        avgACV,
+        avgUDCV,
+        avgPCGV,
+        category,
+      };
+    });
+  };
+
   // Indicator State
   const [indicators, setIndicators] = useState<any[]>([]);
   const [loadingIndicators, setLoadingIndicators] = useState(false);
   const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
-  const [indicatorForm, setIndicatorForm] = useState({ id: '', code: '', name: '', description: '' });
+  const [indicatorForm, setIndicatorForm] = useState({ id: '', code: '', name: '', description: '', dimensi: '', unsur: '', aspek: '' });
   const [indicatorError, setIndicatorError] = useState<string | null>(null);
   const [savingIndicator, setSavingIndicator] = useState(false);
 
@@ -169,6 +256,9 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
           code: indicatorForm.code,
           name: indicatorForm.name,
           description: indicatorForm.description,
+          dimensi: indicatorForm.dimensi,
+          unsur: indicatorForm.unsur,
+          aspek: indicatorForm.aspek,
         }),
       });
 
@@ -178,7 +268,7 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
       }
 
       await fetchIndicators();
-      setIndicatorForm({ id: '', code: '', name: '', description: '' });
+      setIndicatorForm({ id: '', code: '', name: '', description: '', dimensi: '', unsur: '', aspek: '' });
     } catch (err: any) {
       setIndicatorError(err.message || 'Gagal menyimpan indikator');
     } finally {
@@ -620,7 +710,7 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => {
-                    setIndicatorForm({ id: '', code: '', name: '', description: '' });
+                    setIndicatorForm({ id: '', code: '', name: '', description: '', dimensi: '', unsur: '', aspek: '' });
                     setIndicatorError(null);
                     setIsIndicatorModalOpen(true);
                   }}
@@ -1231,21 +1321,108 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
 
           {/* Breakdown sections */}
           <div className="grid grid-cols-1 gap-6">
-            {/* Indicators table */}
+            {/* 1. Ringkasan Dimensi Table (Dashboard Kabupaten Style) */}
             <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
-                <h3 className="text-base font-bold text-text-primary">Breakdown Skor per Indikator</h3>
-                <p className="text-xs text-text-secondary">Rincian nilai indeks per indikator pertanyaan kuesioner.</p>
+              <div className="px-6 py-4 border-b border-border bg-slate-50/50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-text-primary">Ringkasan Indeks per Dimensi</h3>
+                  <p className="text-xs text-text-secondary">Rangkuman kinerja infrastruktur kabupaten berdasarkan dimensi metodologi IKLI.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg border border-amber-200">
+                  Dashboard Kabupaten
+                </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-border">
-                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kode Indikator</th>
-                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai Raw</th>
-                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Nilai Skala 100</th>
-                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Kategori</th>
-                      <th className="px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Responden</th>
+                    <tr className="bg-slate-50 border-b border-border text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      <th className="px-6 py-3">Dimensi</th>
+                      <th className="px-6 py-3 text-center">Harapan (H)</th>
+                      <th className="px-6 py-3 text-center">IHLI</th>
+                      <th className="px-6 py-3 text-center">Kepuasan (K)</th>
+                      <th className="px-6 py-3 text-center">IKLI</th>
+                      <th className="px-6 py-3 text-center">Gap (K - H)</th>
+                      <th className="px-6 py-3 text-center">ACV</th>
+                      <th className="px-6 py-3 text-center">UDCV</th>
+                      <th className="px-6 py-3 text-center">PCGV</th>
+                      <th className="px-6 py-3 text-center">Mutu / Kategori</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-sm text-text-primary">
+                    {(() => {
+                      const dimensiSummary = getDimensiSummary();
+                      if (dimensiSummary.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={10} className="px-6 py-10 text-center text-text-muted">
+                              Belum ada data skor per dimensi. Klik Kalkulasi untuk memproses data.
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return dimensiSummary.map((d, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-3.5 font-semibold text-text-primary">{d.dimensi}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs">{d.avgHarapan.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-bold font-mono text-xs text-amber-600">{d.avgIHLI.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs">{d.avgKepuasan.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-bold font-mono text-xs text-primary">{d.avgIKLI.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs font-semibold text-danger">{d.avgGap.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs">{d.avgACV.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs">{d.avgUDCV.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center font-mono text-xs">{d.avgPCGV.toFixed(2)}</td>
+                          <td className="px-6 py-3.5 text-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                              d.category.startsWith('A') 
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                : d.category.startsWith('B')
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                : d.category.startsWith('C')
+                                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                : 'bg-rose-50 border-rose-200 text-rose-700'
+                            }`}>
+                              {d.category}
+                            </span>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 2. Detail Indikator Table (Data Kab Style) */}
+            <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-border bg-slate-50/50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-text-primary">Detail Indikator (Data Kab)</h3>
+                  <p className="text-xs text-text-secondary">Rincian seluruh parameter indikator, nilai double-rating, gap analysis, dan value assessment.</p>
+                </div>
+                <span className="px-2.5 py-1 bg-primary-soft text-primary text-xs font-bold rounded-lg border border-primary/20">
+                  Data Kab (Widescreen)
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[1400px]">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-border text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      <th className="px-4 py-3 text-center">No</th>
+                      <th className="px-4 py-3">Dimensi</th>
+                      <th className="px-4 py-3">Unsur</th>
+                      <th className="px-4 py-3">Aspek</th>
+                      <th className="px-4 py-3">Indikator</th>
+                      <th className="px-4 py-3 text-center">Harapan (H)</th>
+                      <th className="px-4 py-3 text-center">IHLI</th>
+                      <th className="px-4 py-3 text-center">Kepuasan (K)</th>
+                      <th className="px-4 py-3 text-center">IKLI</th>
+                      <th className="px-4 py-3 text-center">Gap (K - H)</th>
+                      <th className="px-4 py-3 text-center">SKOR Kepuasan</th>
+                      <th className="px-4 py-3 text-center">SKOR Harapan</th>
+                      <th className="px-4 py-3 text-center">ACV</th>
+                      <th className="px-4 py-3 text-center">UDCV</th>
+                      <th className="px-4 py-3 text-center">PCGV</th>
+                      <th className="px-4 py-3 text-center">Mutu / Kategori</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-sm text-text-primary">
@@ -1256,25 +1433,57 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                       if (indicatorScores.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={5} className="px-6 py-10 text-center text-text-muted">
+                            <td colSpan={16} className="px-6 py-10 text-center text-text-muted">
                               Belum ada data skor indikator. Klik Kalkulasi untuk memproses data.
                             </td>
                           </tr>
                         );
                       }
-                      return indicatorScores.map((s) => (
-                        <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-3.5 font-semibold font-mono text-xs">{s.indicatorCode}</td>
-                          <td className="px-6 py-3.5">{s.scoreRaw.toFixed(2)}</td>
-                          <td className="px-6 py-3.5 font-bold text-primary">{s.score100.toFixed(2)}</td>
-                          <td className="px-6 py-3.5">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 border text-slate-700">
-                              {s.category}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3.5 text-text-secondary">{s.responseCount}</td>
-                        </tr>
-                      ));
+                      const indicatorMap = new Map(indicators.map((ind) => [ind.code, ind]));
+                      return indicatorScores.map((s, idx) => {
+                        const indInfo = indicatorMap.get(s.indicatorCode);
+                        const dimensi = indInfo?.dimensi || '-';
+                        const unsur = indInfo?.unsur || '-';
+                        const aspek = indInfo?.aspek || '-';
+                        const name = indInfo?.name || s.indicatorCode;
+
+                        return (
+                          <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 text-center font-mono text-xs">{idx + 1}</td>
+                            <td className="px-4 py-3 font-semibold text-xs whitespace-nowrap">{dimensi}</td>
+                            <td className="px-4 py-3 text-xs">{unsur}</td>
+                            <td className="px-4 py-3 text-xs">{aspek}</td>
+                            <td className="px-4 py-3 text-xs max-w-xs truncate" title={name}>{name}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.harapanRaw ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs font-bold text-amber-600">{(s.ihli ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.scoreRaw ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs font-bold text-primary">{(s.score100 ?? 0).toFixed(2)}</td>
+                            <td className={`px-4 py-3 text-center font-mono text-xs font-semibold ${
+                              (s.gap ?? 0) < 0 ? 'text-danger' : 'text-emerald-600'
+                            }`}>
+                              {(s.gap ?? 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.skorKepuasan ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.skorHarapan ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.acv ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.udcv ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{(s.pcgv ?? 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${
+                                s.category.startsWith('A') 
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                  : s.category.startsWith('B')
+                                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                  : s.category.startsWith('C')
+                                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                  : 'bg-rose-50 border-rose-200 text-rose-700'
+                              }`}>
+                                {s.category}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      });
                     })()}
                   </tbody>
                 </table>
@@ -1501,16 +1710,21 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Bobot Penilaian (Weight) *
+                    Bobot Pertanyaan (Weight) *
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="0.1"
+                    min="0"
                     required
+                    placeholder="1.0"
                     value={questionForm.weight}
                     onChange={(e) => setQuestionForm({ ...questionForm, weight: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                   />
+                  <p className="text-[10px] text-text-muted leading-normal">
+                    Nilai default: 1.0. Tulis angka lebih besar (misal 2.0) jika pertanyaan ini 2x lipat lebih penting/berpengaruh dibanding pertanyaan lain dalam satu indikator.
+                  </p>
                 </div>
               </div>
 
@@ -1635,6 +1849,9 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                               code: ind.code,
                               name: ind.name,
                               description: ind.description || '',
+                              dimensi: ind.dimensi || '',
+                              unsur: ind.unsur || '',
+                              aspek: ind.aspek || '',
                             })}
                             className="p-1.5 text-text-secondary hover:text-primary hover:bg-white rounded-lg border border-transparent hover:border-border transition-all shadow-sm"
                             title="Edit Indikator"
@@ -1657,7 +1874,7 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
               </div>
 
               {/* Right Side: Form Create/Edit (2 cols) */}
-              <form onSubmit={handleSaveIndicator} className="col-span-2 p-6 flex flex-col justify-between h-full bg-slate-50/30">
+              <form onSubmit={handleSaveIndicator} className="col-span-2 p-6 flex flex-col justify-between h-full bg-slate-50/30 overflow-y-auto">
                 <div className="space-y-4">
                   <h4 className="font-bold text-text-primary text-sm">
                     {indicatorForm.id ? 'Edit Indikator' : 'Tambah Indikator Baru'}
@@ -1700,13 +1917,67 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Dimensi *
+                    </label>
+                    <select
+                      required
+                      value={indicatorForm.dimensi}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, dimensi: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    >
+                      <option value="">-- Pilih Dimensi --</option>
+                      <option value="Jalan dan Jembatan">Jalan dan Jembatan</option>
+                      <option value="Air Bersih">Air Bersih</option>
+                      <option value="Permukiman">Permukiman</option>
+                      <option value="Ruang Publik">Ruang Publik</option>
+                      <option value="Pelayanan Publik">Pelayanan Publik</option>
+                      <option value="Irigasi">Irigasi</option>
+                      <option value="Perhubungan">Perhubungan</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Unsur / Kategori *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Jalan Kabupaten, Jembatan"
+                      value={indicatorForm.unsur}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, unsur: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                      Aspek Penilaian *
+                    </label>
+                    <select
+                      required
+                      value={indicatorForm.aspek}
+                      onChange={(e) => setIndicatorForm({ ...indicatorForm, aspek: e.target.value })}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    >
+                      <option value="">-- Pilih Aspek --</option>
+                      <option value="Ketersediaan (Availability)">Ketersediaan (Availability)</option>
+                      <option value="Kualitas Fisik (Quality)">Kualitas Fisik (Quality)</option>
+                      <option value="Kesesuaian (Appropriateness)">Kesesuaian (Appropriateness)</option>
+                      <option value="Pemanfaatan (Utility)">Pemanfaatan (Utility)</option>
+                      <option value="Kontribusi terhadap ekonomi">Kontribusi terhadap ekonomi</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                       Deskripsi / Penjelasan
                     </label>
                     <textarea
                       placeholder="Penjelasan singkat mengenai aspek indikator ini..."
                       value={indicatorForm.description}
                       onChange={(e) => setIndicatorForm({ ...indicatorForm, description: e.target.value })}
-                      rows={4}
+                      rows={2}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm resize-none"
                     />
                   </div>
@@ -1716,7 +1987,7 @@ export default function SurveyWorkspacePage({ params }: { params: { id: string }
                   {indicatorForm.id && (
                     <button
                       type="button"
-                      onClick={() => setIndicatorForm({ id: '', code: '', name: '', description: '' })}
+                      onClick={() => setIndicatorForm({ id: '', code: '', name: '', description: '', dimensi: '', unsur: '', aspek: '' })}
                       className="flex-1 px-4 py-2 border border-border text-sm font-medium rounded-lg text-text-secondary hover:bg-white transition-colors"
                     >
                       Batal

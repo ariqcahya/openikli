@@ -218,15 +218,16 @@ model SurveyResponse {
 }
 
 model SurveyAnswer {
-  id             String         @id @default(uuid())
-  responseId     String         @map("response_id")
-  questionId     String         @map("question_id")
-  ratingValue    Int?           @map("rating_value")
-  textValue      String?        @map("text_value")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
-  response       SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  question       SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id               String         @id @default(uuid())
+  responseId       String         @map("response_id")
+  questionId       String         @map("question_id")
+  ratingValue      Int?           @map("rating_value")
+  expectationValue Int?           @map("expectation_value")
+  textValue        String?        @map("text_value")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  response         SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question         SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([responseId, questionId])
   @@map("survey_answers")
@@ -238,8 +239,16 @@ model IkliScore {
   regionId             String?             @map("region_id")
   infrastructureTypeId String?             @map("infrastructure_type_id")
   indicatorCode        String              @map("indicator_code")
-  scoreRaw             Float               @map("score_raw")
-  score100             Float               @map("score_100")
+  scoreRaw             Float               @map("score_raw") // Kepuasan Raw
+  score100             Float               @map("score_100") // IKLI
+  harapanRaw           Float               @default(0.0) @map("harapan_raw")
+  ihli                 Float               @default(0.0)
+  gap                  Float               @default(0.0)
+  skorKepuasan         Float               @default(0.0) @map("skor_kepuasan")
+  skorHarapan          Float               @default(0.0) @map("skor_harapan")
+  acv                  Float               @default(0.0)
+  udcv                 Float               @default(0.0)
+  pcgv                 Float               @default(0.0)
   category             String
   responseCount        Int                 @map("response_count")
   calculatedAt         DateTime            @default(now()) @map("calculated_at")
@@ -336,6 +345,9 @@ model SurveyIndicator {
   code        String
   name        String
   description String?
+  dimensi     String?
+  unsur       String?
+  aspek       String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   survey      Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
