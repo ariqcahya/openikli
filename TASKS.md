@@ -271,60 +271,60 @@ Status:
 
 ### Scoring Service
 
-- [ ] Implement helper konversi skor ke 0–100.
-- [ ] Implement kategori skor.
-- [ ] Implement weighted average.
-- [ ] Implement score per indicator.
-- [ ] Implement score per infrastructure.
-- [ ] Implement score per region.
-- [ ] Implement total IKLI.
-- [ ] Implement response_count.
+- [x] Implement helper konversi skor ke 0–100.
+- [x] Implement kategori skor.
+- [x] Implement weighted average.
+- [x] Implement score per indicator.
+- [x] Implement score per infrastructure.
+- [x] Implement score per region.
+- [x] Implement total IKLI.
+- [x] Implement response_count.
 
 ### Database
 
-- [ ] Buat model `IkliScore`.
-- [ ] Tambahkan field:
-  - [ ] survey_id
-  - [ ] region_id
-  - [ ] infrastructure_type_id
-  - [ ] indicator_code
-  - [ ] score_raw
-  - [ ] score_100
-  - [ ] category
-  - [ ] response_count
-  - [ ] calculated_at
-- [ ] Migration database.
-- [ ] Index untuk query dashboard.
+- [x] Buat model `IkliScore`.
+- [x] Tambahkan field:
+  - [x] survey_id
+  - [x] region_id
+  - [x] infrastructure_type_id
+  - [x] indicator_code
+  - [x] score_raw
+  - [x] score_100
+  - [x] category
+  - [x] response_count
+  - [x] calculated_at
+- [x] Migration database.
+- [x] Index untuk query dashboard.
 
 ### API
 
-- [ ] Endpoint recalculate score.
-- [ ] Endpoint get scores.
-- [ ] Endpoint dashboard summary.
-- [ ] Authorization guard.
+- [x] Endpoint recalculate score.
+- [x] Endpoint get scores.
+- [x] Endpoint dashboard summary.
+- [x] Authorization guard.
 
 ### UI
 
-- [ ] Tombol recalculate.
-- [ ] Tampilkan status kalkulasi terakhir.
-- [ ] Tampilkan rumus scoring.
-- [ ] Empty state jika belum ada jawaban.
+- [x] Tombol recalculate.
+- [x] Tampilkan status kalkulasi terakhir.
+- [x] Tampilkan rumus scoring.
+- [x] Empty state jika belum ada jawaban.
 
 ### Tests
 
-- [ ] Unit test scoring scale 1–5.
-- [ ] Unit test scoring scale 1–4.
-- [ ] Unit test weighted score.
-- [ ] Unit test kategori skor.
-- [ ] Unit test response_count.
+- [x] Unit test scoring scale 1–5.
+- [x] Unit test scoring scale 1–4.
+- [x] Unit test weighted score.
+- [x] Unit test kategori skor.
+- [x] Unit test response_count.
 
 ### Acceptance
 
-- [ ] Skor tidak menggunakan LLM.
-- [ ] Skor konsisten pada recalculate.
-- [ ] Setiap skor menyertakan response_count.
-- [ ] Skor tampil dengan kategori.
-- [ ] Data antar organisasi tidak bercampur.
+- [x] Skor tidak menggunakan LLM.
+- [x] Skor konsisten pada recalculate.
+- [x] Setiap skor menyertakan response_count.
+- [x] Skor tampil dengan kategori.
+- [x] Data antar organisasi tidak bercampur.
 
 ---
 
